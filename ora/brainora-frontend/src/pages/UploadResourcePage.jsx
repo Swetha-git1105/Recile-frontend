@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { uploadResource } from "../services/api";
 import {
   BEYOND_CATEGORIES,
@@ -11,22 +11,47 @@ import {
   getCatalogueSubjects,
   hasCatalogue,
 } from "../data/academicData";
+import "../styles/LearnPage.css";
 import "../styles/UploadResourcePage.css";
 
 const ACCEPTED_EXTENSIONS = ".pdf,.ppt,.pptx,.doc,.docx,.mp4";
+
+// Department and semester are pre-selected, so the subjects of that
+// semester are listed as soon as the page opens (same as the Learn page).
+const DEFAULT_DEPARTMENT = (() => {
+  const list = Array.isArray(DEPARTMENTS) ? DEPARTMENTS : [];
+  const cse = list.find((item) =>
+    /computer\s*science|^cse$/i.test(`${item.label} ${item.value}`)
+  );
+
+  return (cse || list[0])?.value || "";
+})();
+
+const DEFAULT_SEMESTER = (Array.isArray(SEMESTERS) && SEMESTERS[0]) || "";
+
+function fileKind(file) {
+  const name = (file?.name || "").toLowerCase();
+
+  if (name.endsWith(".mp4")) return "video";
+  if (name.endsWith(".pdf")) return "pdf";
+
+  return "other";
+}
 
 export default function UploadResourcePage({ onUpload, onCancel }) {
   const fileInputRef = useRef(null);
 
   const [title, setTitle] = useState("");
   const [scope, setScope] = useState("SUBJECT");
-  const [department, setDepartment] = useState("");
-  const [semester, setSemester] = useState("");
+  const [department, setDepartment] = useState(DEFAULT_DEPARTMENT);
+  const [semester, setSemester] = useState(DEFAULT_SEMESTER);
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState("");
   const [type, setType] = useState("Notes");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -34,23 +59,49 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
 
   const isSubjectScope = scope === "SUBJECT";
 
+  // A local preview of the chosen file, made in the browser (no upload).
+  useEffect(() => {
+    if (!file) {
+      setPreviewUrl("");
+      setShowPreview(false);
+      return undefined;
+    }
+
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
   // Verified subject list for this department + semester (if we have one).
-  const subjects = useMemo(
-    () => getCatalogueSubjects(department, semester),
-    [department, semester]
-  );
+  const subjects = useMemo(() => {
+    try {
+      const list = getCatalogueSubjects(department, semester);
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  }, [department, semester]);
 
   // Departments without a verified list let the student type the subject.
   const departmentHasCatalogue = hasCatalogue(department);
 
   function handleScopeChange(value) {
     setScope(value);
-    setDepartment("");
-    setSemester("");
+    setDepartment(DEFAULT_DEPARTMENT);
+    setSemester(DEFAULT_SEMESTER);
     setSubject("");
     setCategory("");
     setError("");
     setSuccess("");
+  }
+
+  function clearFile() {
+    setFile(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   function handleFileChange(selectedFile) {
@@ -82,6 +133,7 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
     }
 
     setFile(selectedFile);
+    setShowPreview(false);
 
     // Picking an mp4 switches the type to "Video" automatically.
     if (isVideo) {
@@ -140,18 +192,13 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
       // The server message includes the credits earned.
       setSuccess(result?.message || "Resource uploaded successfully!");
 
+      // Department and semester stay selected for the next upload.
       setTitle("");
-      setDepartment("");
-      setSemester("");
       setSubject("");
       setCategory("");
       setType("Notes");
       setDescription("");
-      setFile(null);
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      clearFile();
     } catch (err) {
       setError(err.message || "Upload failed. Please try again.");
     } finally {
@@ -167,22 +214,35 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
     }
   }
 
+  const kind = fileKind(file);
+
   return (
-    <div className="upload-page">
-      <div className="upload-container">
-        <div className="upload-header">
-          <h1>Share Learning Resources</h1>
+    <main className="learn-page upload-page">
+      <section className="learn-heading">
+        <div>
+          <span className="learn-eyebrow">SHARE WITH STUDENTS</span>
+          <h1>Upload</h1>
           <p>
             Upload useful academic materials and help your fellow students
             learn better.
           </p>
         </div>
+      </section>
+
+      <section className="learn-explorer upload-card">
+        <div className="learn-section-heading">
+          <div>
+            <span className="learn-eyebrow">RESOURCE DETAILS</span>
+            <h2>Share a learning resource</h2>
+            <p>Tell us where this resource belongs, then add your file.</p>
+          </div>
+        </div>
 
         <form className="upload-form" onSubmit={handleSubmit}>
-          <div className="upload-field">
-            <label htmlFor="resource-title">Resource Title *</label>
+          <label className="upload-field">
+            <span>Resource Title *</span>
             <input
-              id="resource-title"
+              className="upload-control"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -190,7 +250,7 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
               maxLength={180}
               required
             />
-          </div>
+          </label>
 
           <fieldset className="upload-scope-field">
             <legend>Where should this resource appear? *</legend>
@@ -202,6 +262,7 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
                   scope === "SUBJECT" ? "selected" : ""
                 }`}
                 onClick={() => handleScopeChange("SUBJECT")}
+                aria-pressed={scope === "SUBJECT"}
               >
                 <strong>Subject-specific</strong>
                 <small>For a particular department and subject</small>
@@ -213,6 +274,7 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
                   scope === "COMMON" ? "selected" : ""
                 }`}
                 onClick={() => handleScopeChange("COMMON")}
+                aria-pressed={scope === "COMMON"}
               >
                 <strong>Beyond the Syllabus</strong>
                 <small>Useful resources for all students</small>
@@ -221,137 +283,152 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
           </fieldset>
 
           {isSubjectScope ? (
-            <div className="upload-academic-fields">
-              <div className="upload-field">
-                <label htmlFor="department">Department *</label>
-                <select
-                  id="department"
-                  value={department}
-                  onChange={(e) => {
-                    setDepartment(e.target.value);
-                    setSemester("");
-                    setSubject("");
-                  }}
-                  required
-                >
-                  <option value="">Select department</option>
-                  {DEPARTMENTS.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="upload-field">
-                <label htmlFor="semester">Semester *</label>
-                <select
-                  id="semester"
-                  value={semester}
-                  onChange={(e) => {
-                    setSemester(e.target.value);
-                    setSubject("");
-                  }}
-                  disabled={!department}
-                  required
-                >
-                  <option value="">Select semester</option>
-                  {SEMESTERS.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="upload-field">
-                <label htmlFor="subject">Subject *</label>
-
-                {departmentHasCatalogue ? (
+            <>
+              <div className="learn-select-row">
+                <label className="learn-select-field">
+                  <span>Department *</span>
                   <select
-                    id="subject"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    disabled={!semester}
+                    value={department}
+                    onChange={(e) => {
+                      setDepartment(e.target.value);
+                      setSubject("");
+                    }}
                     required
                   >
-                    <option value="">Select subject</option>
-                    {subjects.map((item) => (
+                    <option value="">Select department</option>
+                    {DEPARTMENTS.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="learn-select-field">
+                  <span>Semester *</span>
+                  <select
+                    value={semester}
+                    onChange={(e) => {
+                      setSemester(e.target.value);
+                      setSubject("");
+                    }}
+                    required
+                  >
+                    <option value="">Select semester</option>
+                    {SEMESTERS.map((item) => (
                       <option key={item} value={item}>
                         {item}
                       </option>
                     ))}
                   </select>
-                ) : (
-                  <input
-                    id="subject"
-                    type="text"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    placeholder={
-                      semester
-                        ? "Type the subject name"
-                        : "Select semester first"
-                    }
-                    maxLength={180}
-                    disabled={!semester}
-                    required
-                  />
-                )}
+                </label>
               </div>
-            </div>
+
+              <div className="learn-select-row">
+                {departmentHasCatalogue ? (
+                  <label className="learn-select-field">
+                    <span>Subject *</span>
+                    <select
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      disabled={!semester}
+                      required
+                    >
+                      <option value="">
+                        {semester ? "Select subject" : "Select semester first"}
+                      </option>
+                      {subjects.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <label className="upload-field">
+                    <span>Subject *</span>
+                    <input
+                      className="upload-control"
+                      type="text"
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      placeholder={
+                        semester
+                          ? "Type the subject name"
+                          : "Select semester first"
+                      }
+                      maxLength={180}
+                      disabled={!semester}
+                      required
+                    />
+                  </label>
+                )}
+
+                <label className="learn-select-field">
+                  <span>Resource Type *</span>
+                  <select value={type} onChange={(e) => setType(e.target.value)}>
+                    {RESOURCE_TYPES.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </>
           ) : (
-            <div className="upload-field">
-              <label htmlFor="category">Beyond the Syllabus category *</label>
-              <select
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                required
-              >
-                <option value="">Select category</option>
-                {BEYOND_CATEGORIES.map((item) => (
-                  <option key={item.title} value={item.title}>
-                    {item.title}
-                  </option>
-                ))}
-              </select>
-              <small>
-                This resource will be shared with all students and will not be
-                linked to a particular department or semester.
-              </small>
+            <div className="learn-select-row">
+              <label className="learn-select-field">
+                <span>Beyond the Syllabus category *</span>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  required
+                >
+                  <option value="">Select category</option>
+                  {BEYOND_CATEGORIES.map((item) => (
+                    <option key={item.title} value={item.title}>
+                      {item.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="learn-select-field">
+                <span>Resource Type *</span>
+                <select value={type} onChange={(e) => setType(e.target.value)}>
+                  {RESOURCE_TYPES.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
           )}
 
-          <div className="upload-field">
-            <label htmlFor="resource-type">Resource Type *</label>
-            <select
-              id="resource-type"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-            >
-              {RESOURCE_TYPES.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </div>
+          {!isSubjectScope && (
+            <p className="upload-hint">
+              This resource will be shared with all students and will not be
+              linked to a particular department or semester.
+            </p>
+          )}
 
-          <div className="upload-field">
-            <label htmlFor="resource-description">Description</label>
+          <label className="upload-field">
+            <span>Description (optional)</span>
             <textarea
-              id="resource-description"
+              className="upload-control upload-textarea"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Briefly describe this resource..."
               maxLength={300}
               rows={4}
             />
-          </div>
+            <small className="upload-counter">{description.length} / 300</small>
+          </label>
 
           <div className="upload-field">
-            <label>Upload File *</label>
+            <span>Upload File *</span>
 
             <div
               className={`upload-drop-zone ${dragging ? "dragging" : ""}`}
@@ -383,26 +460,58 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
                 onChange={(e) => handleFileChange(e.target.files[0])}
               />
 
-              <span className="upload-drop-icon">↑</span>
+              <span className="upload-drop-icon" aria-hidden="true">
+                ↑
+              </span>
               <strong>Click to browse or drag your file here</strong>
               <small>PDF, PPT, DOC up to 25 MB | MP4 up to 25 MB</small>
             </div>
 
             {file && (
-              <div className="upload-selected-file">
-                <span>{file.name}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFile(null);
-                    if (fileInputRef.current) {
-                      fileInputRef.current.value = "";
-                    }
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
+              <>
+                <div className="upload-selected-file">
+                  <span>
+                    {file.name} · {(file.size / (1024 * 1024)).toFixed(2)} MB
+                  </span>
+
+                  <div className="upload-selected-buttons">
+                    <button
+                      type="button"
+                      onClick={() => setShowPreview((open) => !open)}
+                    >
+                      {showPreview ? "Hide preview" : "Preview"}
+                    </button>
+
+                    <button type="button" onClick={clearFile}>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                {showPreview && previewUrl && (
+                  <div className="upload-preview">
+                    {kind === "video" && (
+                      <video
+                        src={previewUrl}
+                        controls
+                        preload="metadata"
+                        playsInline
+                      />
+                    )}
+
+                    {kind === "pdf" && (
+                      <iframe src={previewUrl} title="PDF preview" />
+                    )}
+
+                    {kind === "other" && (
+                      <p className="upload-preview-note">
+                        Your browser cannot show a preview of this file type.
+                        It will upload normally, and students can download it.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -437,7 +546,7 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

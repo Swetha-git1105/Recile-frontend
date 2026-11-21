@@ -469,3 +469,8 @@
   font-size: 13px;
   color: #737987;
 }
+
+/* ---------- Top Recommended block on Stay Updated ---------- */
+.top-recommended {
+  margin-bottom: 32px;
+}

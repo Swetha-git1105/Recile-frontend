@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getResources,
   getMyUploads,
-  getResourceFileBlob,
   deleteResource,
 } from "../services/api";
+import useResourceFile from "../hooks/useResourceFile";
+import ResourceRating from "../components/ResourceRating";
+import TopRecommended from "../components/TopRecommended";
 import "../styles/ResourcesPage.css";
 
 function formatDate(date) {
@@ -38,6 +40,85 @@ function typeClass(type) {
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-");
+}
+
+// One card on this page. Preview and Download use the fast direct link,
+// and every card has the star rating.
+function ResourceCard({ resource, canDelete, deleting, onDelete, disabled }) {
+  const { busy, error, opened, preview, download } = useResourceFile(resource);
+
+  return (
+    <article className="resource-card">
+      <div className="resource-card-top">
+        <div className="resource-file-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M6 3.75h8l4 4v12.5H6z" />
+            <path d="M14 3.75v4h4M9 12h6m-6 3h6" />
+          </svg>
+        </div>
+
+        <div className="resource-badges">
+          <span className={`resource-kind kind-${typeClass(resource.type)}`}>
+            {resource.type || "Other"}
+          </span>
+
+          <span className="resource-type">{getFileType(resource)}</span>
+        </div>
+      </div>
+
+      <h3 className="resource-card-title">{resource.title}</h3>
+
+      {resource.semester && (
+        <p className="resource-card-subject">{resource.semester}</p>
+      )}
+
+      <p className="resource-card-uploader">
+        Uploaded by {resource.uploaderName || "Student"}
+      </p>
+
+      {resource.department && (
+        <p className="resource-card-department">{resource.department}</p>
+      )}
+
+      <ResourceRating resourceId={resource.id} nudge={opened} />
+
+      <div className="resource-card-footer">
+        <span />
+        <time className="resource-date">{formatDate(resource.uploadedAt)}</time>
+      </div>
+
+      {error && <p className="resources-error" role="alert">{error}</p>}
+
+      <div className="resource-card-actions">
+        <button
+          type="button"
+          onClick={preview}
+          disabled={busy !== "" || disabled}
+        >
+          {busy === "preview" ? "Opening..." : "Preview"}
+        </button>
+
+        <button
+          type="button"
+          onClick={download}
+          disabled={busy !== "" || disabled}
+        >
+          {busy === "download" ? "Preparing..." : "Download"}
+        </button>
+
+        {canDelete && (
+          <button
+            type="button"
+            className="resource-delete-button"
+            onClick={() => onDelete(resource)}
+            disabled={busy !== "" || disabled}
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </button>
+        )}
+      </div>
+    </article>
+  );
 }
 
 export default function ResourcesPage() {
@@ -136,68 +217,6 @@ export default function ResourcesPage() {
     });
   }, [filteredResources]);
 
-  async function handlePreview(resource) {
-    // Open a tab immediately so the browser does not block the popup.
-    const previewWindow = window.open("about:blank", "_blank");
-
-    if (!previewWindow) {
-      setActionError("Please allow pop-ups to preview resources.");
-      return;
-    }
-
-    try {
-      setActiveAction(`${resource.id}-preview`);
-      setActionError("");
-
-      const blob = await getResourceFileBlob(
-        resource.id,
-        "preview"
-      );
-
-      const fileUrl = URL.createObjectURL(blob);
-      previewWindow.location.href = fileUrl;
-
-      // Keep the URL alive briefly while the browser loads the file.
-      window.setTimeout(() => {
-        URL.revokeObjectURL(fileUrl);
-      }, 60000);
-    } catch (err) {
-      previewWindow.close();
-      setActionError(err.message || "Unable to preview this resource.");
-    } finally {
-      setActiveAction(null);
-    }
-  }
-
-  async function handleDownload(resource) {
-    try {
-      setActiveAction(`${resource.id}-download`);
-      setActionError("");
-
-      const blob = await getResourceFileBlob(
-        resource.id,
-        "download"
-      );
-
-      const fileUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-
-      link.href = fileUrl;
-      link.download =
-        resource.originalFilename || `${resource.title}.file`;
-
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      URL.revokeObjectURL(fileUrl);
-    } catch (err) {
-      setActionError(err.message || "Unable to download this resource.");
-    } finally {
-      setActiveAction(null);
-    }
-  }
-
   async function handleDelete(resource) {
     const confirmed = window.confirm(
       `Are you sure you want to delete "${resource.title}"?`
@@ -232,6 +251,15 @@ export default function ResourcesPage() {
   return (
     <main className="resources-page">
       <h1 className="resources-title">Resources</h1>
+
+      {activeTab === "all" && !searchTerm.trim() && selectedDepartment === "All" && (
+        <section className="top-recommended" aria-labelledby="top-recommended-title">
+          <h2 className="subject-title" id="top-recommended-title">
+            Top Recommended
+          </h2>
+          <TopRecommended limit={6} />
+        </section>
+      )}
 
       <div className="resources-tabs">
         <button
@@ -370,91 +398,14 @@ export default function ResourcesPage() {
                 aria-label={`${subject} resources`}
               >
                 {items.map((resource) => (
-                  <article className="resource-card" key={resource.id}>
-                    <div className="resource-card-top">
-                      <div className="resource-file-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                          <path d="M6 3.75h8l4 4v12.5H6z" />
-                          <path d="M14 3.75v4h4M9 12h6m-6 3h6" />
-                        </svg>
-                      </div>
-
-                      <div className="resource-badges">
-                        <span
-                          className={`resource-kind kind-${typeClass(resource.type)}`}
-                        >
-                          {resource.type || "Other"}
-                        </span>
-
-                        <span className="resource-type">
-                          {getFileType(resource)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <h3 className="resource-card-title">
-                      {resource.title}
-                    </h3>
-
-                    {resource.semester && (
-                      <p className="resource-card-subject">
-                        {resource.semester}
-                      </p>
-                    )}
-
-                    <p className="resource-card-uploader">
-                      Uploaded by {resource.uploaderName || "Student"}
-                    </p>
-
-                    {resource.department && (
-                      <p className="resource-card-department">
-                        {resource.department}
-                      </p>
-                    )}
-
-                    <div className="resource-card-footer">
-                      <span className="resource-rating">New</span>
-
-                      <time className="resource-date">
-                        {formatDate(resource.uploadedAt)}
-                      </time>
-                    </div>
-
-                    <div className="resource-card-actions">
-                      <button
-                        type="button"
-                        onClick={() => handlePreview(resource)}
-                        disabled={activeAction !== null}
-                      >
-                        {activeAction === `${resource.id}-preview`
-                          ? "Opening..."
-                          : "Preview"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDownload(resource)}
-                        disabled={activeAction !== null}
-                      >
-                        {activeAction === `${resource.id}-download`
-                          ? "Downloading..."
-                          : "Download"}
-                      </button>
-
-                      {activeTab === "mine" && (
-                        <button
-                          type="button"
-                          className="resource-delete-button"
-                          onClick={() => handleDelete(resource)}
-                          disabled={activeAction !== null}
-                        >
-                          {activeAction === `${resource.id}-delete`
-                            ? "Deleting..."
-                            : "Delete"}
-                        </button>
-                      )}
-                    </div>
-                  </article>
+                  <ResourceCard
+                    key={resource.id}
+                    resource={resource}
+                    canDelete={activeTab === "mine"}
+                    deleting={activeAction === `${resource.id}-delete`}
+                    onDelete={handleDelete}
+                    disabled={activeAction !== null}
+                  />
                 ))}
               </div>
             </section>

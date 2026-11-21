@@ -8,7 +8,9 @@ import {
 
 import { useAuth } from "./context/AuthContext";
 import { ResourceProvider, useResources } from "./context/ResourceContext";
-
+import { RatingProvider } from "./context/RatingContext";
+import LearnSubjectPage from "./pages/LearnSubjectPage";
+import LearnBeyondPage from "./pages/LearnBeyondPage";
 import AppLayout from "./components/AppLayout";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -75,6 +77,9 @@ function AppRoutes() {
           path="/profile"
           element={<ProfilePage title="Profile" />}
         />
+        <Route path="/learn" element={<LearnPage />} />
+<Route path="/learn/subject" element={<LearnSubjectPage />} />
+<Route path="/learn/beyond" element={<LearnBeyondPage />} />
 
         <Route
           path="/settings"
@@ -99,7 +104,7 @@ function AppRoutes() {
 
         <Route
           path="/updates"
-          element={<ComingSoonPage title="Stay Updated" />}
+          element={<ResourcesPage title="Stay Updated" />}
         />
       </Route>
 
@@ -111,7 +116,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <ResourceProvider>
-      <AppRoutes />
+      <RatingProvider>
+        <AppRoutes />
+      </RatingProvider>
     </ResourceProvider>
   );
 }

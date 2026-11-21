@@ -47,6 +47,13 @@ function handleUnauthorized() {
 // COMMON API REQUEST FUNCTION
 // ==========================================
 
+// An Error that also remembers the HTTP status code.
+function httpError(message, status) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
 async function request(endpoint, options = {}) {
   const {
     auth = false,
@@ -123,32 +130,37 @@ async function request(endpoint, options = {}) {
 
     if (response.status === 401 && auth) {
       handleUnauthorized();
-      throw new Error(
-        'Session expired or invalid token. Please log out and log in again.'
+      throw httpError(
+        'Session expired or invalid token. Please log out and log in again.',
+        401
       );
     }
 
     if (response.status === 403) {
-      throw new Error(
-        'You do not have permission to perform this action.'
+      throw httpError(
+        message || 'You do not have permission to perform this action.',
+        403
       );
     }
 
     if (response.status === 413) {
-      throw new Error(
-        'The uploaded file is too large. Please choose a smaller file.'
+      throw httpError(
+        'The uploaded file is too large. Please choose a smaller file.',
+        413
       );
     }
 
     if (response.status === 422) {
-      throw new Error(
+      throw httpError(
         message ||
-        'The uploaded resource is unreadable or does not meet quality requirements.'
+        'The uploaded resource is unreadable or does not meet quality requirements.',
+        422
       );
     }
 
-    throw new Error(
-      message || `Request failed (${response.status})`
+    throw httpError(
+      message || `Request failed (${response.status})`,
+      response.status
     );
   }
 
@@ -350,6 +362,82 @@ export async function getResourceFileBlob(
   }
 
   return response.blob();
+}
+
+// ==========================================
+// FAST PREVIEW AND DOWNLOAD (direct link, no full-file wait)
+// ==========================================
+
+// Asks the backend for a short-lived direct link. The browser opens that
+// link itself, so a PDF starts showing and a video starts playing right
+// away (the server streams it with Range support) instead of the whole
+// file being downloaded into memory first.
+export async function getResourcePreviewLink(id) {
+  const data = await request(`/api/resources/${id}/preview-link`, {
+    method: 'GET',
+    auth: true,
+  });
+
+  if (!data?.url) {
+    throw new Error('Unable to open this resource.');
+  }
+
+  // Works for a relative link ("/api/files/...") and a full link (cloud storage).
+  return /^https?:\/\//i.test(data.url) ? data.url : `${API_URL}${data.url}`;
+}
+
+function withDownloadFlag(url) {
+  // Only our own backend understands ?download=1. A cloud-storage link is
+  // already signed, so changing it would break the signature.
+  if (!url.startsWith(API_URL)) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}download=1`;
+}
+
+// Returns { url, revoke } for a resource.
+//  1) Fast path: direct streaming link.
+//  2) Fallback (only if the backend has no preview-link endpoint yet):
+//     the old whole-file Blob, so nothing breaks.
+export async function resolveResourceUrl(id, action = 'preview') {
+  try {
+    const link = await getResourcePreviewLink(id);
+
+    return {
+      url: action === 'download' ? withDownloadFlag(link) : link,
+      revoke: null,
+    };
+  } catch (error) {
+    const endpointMissing = [404, 405, 501].includes(error?.status);
+
+    if (!endpointMissing) throw error;
+
+    const blob = await getResourceFileBlob(id, action);
+    const url = URL.createObjectURL(blob);
+
+    return { url, revoke: () => URL.revokeObjectURL(url) };
+  }
+}
+
+// ==========================================
+// RATINGS
+// ==========================================
+
+// Save (or change) the current user's rating, 1 to 5 stars.
+// Returns { resourceId, average, count, myRating }.
+export function rateResource(id, rating) {
+  return request(`/api/ratings/${id}`, {
+    method: 'POST',
+    auth: true,
+    body: { rating },
+  });
+}
+
+// Rating summary of every resource in ONE request:
+// { "12": { average: 4.5, count: 8, myRating: 4 }, ... }
+export function getRatingSummaries() {
+  return request('/api/ratings/summary', {
+    method: 'GET',
+    auth: true,
+  });
 }
 
 // ==========================================

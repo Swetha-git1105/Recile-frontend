@@ -1,4 +1,4 @@
-
+import { useMemo } from "react";
 import {
   ResponsiveContainer,
   PieChart,
@@ -10,197 +10,165 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Legend,
-  LineChart,
-  Line,
 } from "recharts";
-
+import { useResources } from "../context/ResourceContext";
+import { formatCredits } from "../utils/credits";
+import "../styles/LearnPage.css";
 import "../styles/TrackPage.css";
 
-// Sample preview data. Not connected to the backend yet.
-const overview = [
-  {
-    title: "Credit Balance",
-    value: "240",
-    subtitle: "Available credits",
-    icon: "🪙",
-    color: "gold",
-    trend: "Your current balance",
-  },
-  {
-    title: "Contributions",
-    value: "12",
-    subtitle: "Resources shared",
-    icon: "☁️",
-    color: "blue",
-    trend: "Across all subjects",
-  },
-  {
-    title: "Downloads",
-    value: "08",
-    subtitle: "Resources accessed",
-    icon: "⬇️",
-    color: "green",
-    trend: "Learning activity",
-  },
-  {
-    title: "Achievements",
-    value: "02",
-    subtitle: "Milestones reached",
-    icon: "🏆",
-    color: "purple",
-    trend: "Keep progressing",
-  },
-];
+const TYPE_STYLES = {
+  notes: { label: "Notes", color: "#4f7cf0" },
+  qp: { label: "Question Papers", color: "#e05b5b" },
+  assignment: { label: "Assignments", color: "#e4a62b" },
+  video: { label: "Videos", color: "#23a681" },
+  other: { label: "Other", color: "#9aa3af" },
+};
 
-const contributionData = [
-  { name: "Notes", value: 6, color: "#5577e8" },
-  { name: "Question Papers", value: 4, color: "#23a681" },
-  { name: "Videos", value: 2, color: "#f2ae4b" },
-];
-
-const creditData = [
-  { month: "Aug", earned: 20, spent: 5 },
-  { month: "Sep", earned: 35, spent: 10 },
-  { month: "Oct", earned: 25, spent: 15 },
-  { month: "Nov", earned: 50, spent: 20 },
-];
-
-const activityData = [
-  { week: "Week 1", activity: 3 },
-  { week: "Week 2", activity: 7 },
-  { week: "Week 3", activity: 5 },
-  { week: "Week 4", activity: 10 },
-];
-
-const activities = [
-  {
-    title: "Data Structures Notes uploaded",
-    description: "Contribution reward",
-    date: "Today",
-    credits: "+20",
-    type: "earned",
-    icon: "☁️",
-  },
-  {
-    title: "Digital Logic Question Paper approved",
-    description: "Your resource is now available",
-    date: "Yesterday",
-    credits: null,
-    type: "approved",
-    icon: "✓",
-  },
-  {
-    title: "COA Notes downloaded",
-    description: "Resource access",
-    date: "18 Nov",
-    credits: "-5",
-    type: "spent",
-    icon: "⬇️",
-  },
-  {
-    title: "OOP Notes uploaded",
-    description: "Contribution reward",
-    date: "16 Nov",
-    credits: "+15",
-    type: "earned",
-    icon: "☁️",
-  },
-];
-
-function StatCard({ item }) {
-  return (
-    <article className={`track-stat-card ${item.color}`}>
-      <div className="track-stat-top">
-        <div className="track-stat-icon">
-          {item.icon}
-        </div>
-        <span className="track-stat-trend">
-          {item.trend}
-        </span>
-      </div>
-
-      <h2>{item.value}</h2>
-      <h4>{item.title}</h4>
-      <p>{item.subtitle}</p>
-    </article>
-  );
+function typeKey(type) {
+  return (type || "other")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
 }
 
-function TrackPage() {
-  const totalContributions = contributionData.reduce(
-    (total, item) => total + item.value,
-    0
+function startOfWeek(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // Monday
+  return d;
+}
+
+const WEEKS = 6;
+
+export default function TrackPage() {
+  const { myUploads = [], totalCredits = 0, loading, error } = useResources();
+
+  // Files this student uploaded first (duplicates are not counted as uploads).
+  const originals = useMemo(
+    () => myUploads.filter((item) => item.contributionType !== "DUPLICATE_SOURCE"),
+    [myUploads]
   );
 
-  const progress = 60;
+  const subjectsCovered = useMemo(
+    () =>
+      new Set(
+        myUploads
+          .map((item) => (item.subject || "").trim().toLowerCase())
+          .filter(Boolean)
+      ).size,
+    [myUploads]
+  );
+
+  // Contribution breakdown by resource type
+  const breakdown = useMemo(() => {
+    const counts = new Map();
+
+    myUploads.forEach((item) => {
+      const key = typeKey(item.type);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+
+    return [...counts.entries()].map(([key, value]) => ({
+      name: TYPE_STYLES[key]?.label || key,
+      value,
+      color: TYPE_STYLES[key]?.color || TYPE_STYLES.other.color,
+    }));
+  }, [myUploads]);
+
+  // Uploads per week for the last few weeks
+  const weekly = useMemo(() => {
+    const thisWeek = startOfWeek(new Date());
+
+    const buckets = Array.from({ length: WEEKS }, (_, index) => {
+      const start = new Date(thisWeek);
+      start.setDate(start.getDate() - (WEEKS - 1 - index) * 7);
+
+      return {
+        start,
+        label: start.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+        }),
+        uploads: 0,
+      };
+    });
+
+    originals.forEach((item) => {
+      const uploaded = new Date(item.uploadedAt);
+
+      if (Number.isNaN(uploaded.getTime())) return;
+
+      const weekStart = startOfWeek(uploaded).getTime();
+      const bucket = buckets.find((entry) => entry.start.getTime() === weekStart);
+
+      if (bucket) bucket.uploads += 1;
+    });
+
+    return buckets;
+  }, [originals]);
+
+  const stats = [
+    {
+      title: "My credits",
+      value: formatCredits(totalCredits),
+      subtitle: "Credits earned",
+    },
+    {
+      title: "Resources Shared",
+      value: String(myUploads.length),
+      subtitle: `${originals.length} uploaded · ${myUploads.length - originals.length} duplicate`,
+    },
+    {
+      title: "Subjects Covered",
+      value: String(subjectsCovered),
+      subtitle: "Across your contributions",
+    },
+  ];
 
   return (
-    <main className="track-page">
-      <div className="track-container">
-
-        {/* Header */}
-        <header className="track-header">
-          <div>
-            <div className="track-eyebrow">
-              <span>✨</span>
-              YOUR BRAINORA JOURNEY
-            </div>
-
-            <h1>Track Your Progress</h1>
-
-            <p>
-              Every resource shared and every credit earned moves
-              your learning journey forward.
-            </p>
-          </div>
-
-          <div className="track-date">
-            <span>↗</span>
-            My Activity
-          </div>
-        </header>
-
-        {/* Preview Notice */}
-        <div className="track-preview-note">
-          <span>◷</span>
-          Preview mode: sample statistics are shown until live data is connected.
+    <main className="learn-page track-page">
+      <section className="learn-heading">
+        <div>
+          <h1>Track</h1>
+          <p>Your credits and contributions.</p>
         </div>
+      </section>
 
-        {/* Overview Cards */}
-        <section className="track-stats-grid">
-          {overview.map((item) => (
-            <StatCard key={item.title} item={item} />
-          ))}
-        </section>
+      {error && (
+        <div className="learn-status" role="alert">
+          <span>{String(error)}</span>
+        </div>
+      )}
 
-        {/* Charts */}
-        <section className="track-charts-grid">
+      {loading && !error && (
+        <p className="learn-status-text">Loading your activity...</p>
+      )}
 
-          {/* Contribution Doughnut Chart */}
-          <article className="track-panel">
-            <div className="track-panel-heading">
-              <div>
-                <span className="track-section-label">
-                  YOUR SHARING ACTIVITY
-                </span>
-                <h3>Contribution Breakdown</h3>
-                <p>
-                  See what you have shared with your community.
-                </p>
-              </div>
+      <section className="track-stats">
+        {stats.map((item) => (
+          <article className="track-stat-card" key={item.title}>
+            <span className="track-stat-label">{item.title}</span>
+            <strong className="track-stat-value">{item.value}</strong>
+            <span className="track-stat-sub">{item.subtitle}</span>
+          </article>
+        ))}
+      </section>
 
-              <div className="track-heading-icon blue-icon">
-                📚
-              </div>
-            </div>
+      <section className="track-grid">
+        <article className="track-panel">
+          <div className="track-panel-heading">
+            <h3>Contribution Breakdown</h3>
+            <p>What you have shared, by type.</p>
+          </div>
 
+          {breakdown.length ? (
             <div className="donut-layout">
               <div className="donut-chart">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={contributionData}
+                      data={breakdown}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
@@ -210,11 +178,8 @@ function TrackPage() {
                       paddingAngle={4}
                       stroke="none"
                     >
-                      {contributionData.map((entry) => (
-                        <Cell
-                          key={entry.name}
-                          fill={entry.color}
-                        />
+                      {breakdown.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
                       ))}
                     </Pie>
                     <Tooltip />
@@ -222,19 +187,18 @@ function TrackPage() {
                 </ResponsiveContainer>
 
                 <div className="donut-center">
-                  <strong>{totalContributions}</strong>
-                  <span>Total uploads</span>
+                  <strong>{myUploads.length}</strong>
+                  <span>Total</span>
                 </div>
               </div>
 
               <div className="donut-legend">
-                {contributionData.map((item) => (
+                {breakdown.map((item) => (
                   <div className="legend-item" key={item.name}>
                     <span
                       className="legend-dot"
                       style={{ background: item.color }}
                     />
-
                     <div>
                       <span>{item.name}</span>
                       <strong>{item.value}</strong>
@@ -243,262 +207,62 @@ function TrackPage() {
                 ))}
               </div>
             </div>
-          </article>
-
-          {/* Credit Bar Chart */}
-          <article className="track-panel">
-            <div className="track-panel-heading">
-              <div>
-                <span className="track-section-label">
-                  CREDIT ANALYTICS
-                </span>
-                <h3>Credit Flow</h3>
-                <p>Compare credits earned and spent.</p>
-              </div>
-
-              <div className="track-heading-icon gold-icon">
-                🪙
-              </div>
+          ) : (
+            <div className="track-empty">
+              <span>No contributions yet</span>
+              <p>Upload a resource and it will show up here.</p>
             </div>
+          )}
+        </article>
 
+        <article className="track-panel">
+          <div className="track-panel-heading">
+            <h3>Weekly Uploads</h3>
+            <p>Files you uploaded in the last {WEEKS} weeks.</p>
+          </div>
+
+          {originals.length ? (
             <div className="track-chart">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={creditData}
-                  margin={{
-                    top: 12,
-                    right: 8,
-                    left: -18,
-                    bottom: 0,
-                  }}
-                  barGap={7}
+                  data={weekly}
+                  margin={{ top: 12, right: 8, left: -18, bottom: 0 }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
-                    stroke="#e9edf4"
+                    stroke="#e5ecea"
                   />
-
                   <XAxis
-                    dataKey="month"
+                    dataKey="label"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#8992a5", fontSize: 12 }}
+                    tick={{ fill: "#78818c", fontSize: 11 }}
                   />
-
                   <YAxis
+                    allowDecimals={false}
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#8992a5", fontSize: 11 }}
+                    tick={{ fill: "#78818c", fontSize: 11 }}
                   />
-
                   <Tooltip />
-                  <Legend iconType="circle" />
-
                   <Bar
-                    dataKey="earned"
-                    name="Earned"
-                    fill="#5577e8"
-                    radius={[5, 5, 0, 0]}
-                  />
-
-                  <Bar
-                    dataKey="spent"
-                    name="Spent"
-                    fill="#f2ae4b"
+                    dataKey="uploads"
+                    name="Uploads"
+                    fill="#478b75"
                     radius={[5, 5, 0, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </article>
-
-          {/* Weekly Activity Chart */}
-          <article className="track-panel">
-            <div className="track-panel-heading">
-              <div>
-                <span className="track-section-label">
-                  LEARNING CONSISTENCY
-                </span>
-                <h3>Weekly Activity</h3>
-                <p>Resources accessed over the weeks.</p>
-              </div>
-
-              <div className="track-heading-icon green-icon">
-                ↗
-              </div>
+          ) : (
+            <div className="track-empty">
+              <span>No uploads yet</span>
+              <p>Your weekly uploads will be charted here.</p>
             </div>
-
-            <div className="track-chart">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={activityData}
-                  margin={{
-                    top: 15,
-                    right: 12,
-                    left: -18,
-                    bottom: 0,
-                  }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#e9edf4"
-                  />
-
-                  <XAxis
-                    dataKey="week"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#8992a5", fontSize: 11 }}
-                  />
-
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#8992a5", fontSize: 11 }}
-                  />
-
-                  <Tooltip />
-
-                  <Line
-                    type="monotone"
-                    dataKey="activity"
-                    name="Resources accessed"
-                    stroke="#23a681"
-                    strokeWidth={3}
-                    dot={{ r: 5, fill: "#23a681" }}
-                    activeDot={{ r: 7 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </article>
-
-          {/* Milestone */}
-          <article className="track-panel milestone-panel">
-            <div className="track-panel-heading">
-              <div>
-                <span className="track-section-label">
-                  KEEP GOING
-                </span>
-                <h3>Your Next Milestone</h3>
-                <p>
-                  Small contributions create big progress.
-                </p>
-              </div>
-
-              <div className="track-heading-icon purple-icon">
-                🎯
-              </div>
-            </div>
-
-            <div className="milestone-content">
-              <div className="milestone-badge">
-                🏆
-              </div>
-
-              <div className="milestone-info">
-                <span>LEVEL 2</span>
-                <h2>Knowledge Contributor</h2>
-                <p>
-                  You're building a helpful learning community.
-                </p>
-              </div>
-            </div>
-
-            <div className="milestone-progress-heading">
-              <span>Contribution progress</span>
-              <strong>12 / 20</strong>
-            </div>
-
-            <div
-              className="milestone-progress-track"
-              role="progressbar"
-              aria-valuenow={progress}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label="Contribution progress"
-            >
-              <div style={{ width: `${progress}%` }} />
-            </div>
-
-            <div className="milestone-bottom">
-              <span>{progress}% completed</span>
-              <strong>8 more to go!</strong>
-            </div>
-          </article>
-        </section>
-
-        {/* Recent Activity */}
-        <section className="track-panel timeline-panel">
-          <div className="track-panel-heading">
-            <div>
-              <span className="track-section-label">
-                YOUR RECENT JOURNEY
-              </span>
-              <h3>Recent Activity</h3>
-              <p>
-                A record of your contributions and resource usage.
-              </p>
-            </div>
-
-            <div className="track-heading-icon blue-icon">
-              ↗
-            </div>
-          </div>
-
-          <div className="track-timeline">
-            {activities.map((activity, index) => (
-              <div
-                className="timeline-item"
-                key={`${activity.title}-${index}`}
-              >
-                <div className={`timeline-icon ${activity.type}`}>
-                  {activity.icon}
-                </div>
-
-                <div className="timeline-details">
-                  <h4>{activity.title}</h4>
-                  <p>{activity.description}</p>
-                </div>
-
-                <span className="timeline-date">
-                  {activity.date}
-                </span>
-
-                {activity.credits && (
-                  <strong
-                    className={`timeline-credits ${activity.type}`}
-                  >
-                    {activity.credits}
-                  </strong>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="track-footer-message">
-          <div className="footer-message-icon">
-            ✨
-          </div>
-
-          <div>
-            <h3>Keep sharing. Keep learning.</h3>
-            <p>
-              Every useful resource you contribute makes learning
-              easier for someone else.
-            </p>
-          </div>
-
-          <span className="footer-arrow">↗</span>
-        </footer>
-
-      </div>
+          )}
+        </article>
+      </section>
     </main>
   );
 }
-
-export default TrackPage;

@@ -1,5 +1,4 @@
-
-  /* Home page content: the welcome banner and the three quick-access cards.
+/* Home page content: the welcome banner and the three quick-access cards.
    Sizes use clamp(min, scales-with-screen, max) so they match the design on a wide screen
    and shrink smoothly on a laptop. */
 
@@ -146,4 +145,3 @@
   .quick-card h2 { font-size: 18px; }
   .quick-card p { font-size: 14px; }
 }
- 
