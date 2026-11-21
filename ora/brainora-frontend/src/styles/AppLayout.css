@@ -1,0 +1,453 @@
+/* The frame around every logged-in page: top bar + left sidebar + content area.
+   Scoped under .app-shell so it cannot affect Login and Register pages. */
+
+.app-shell {
+  --teal: #20bdb2;
+  --teal-dark: #078f89;
+  --ink: #14252c;
+  --muted: #536675;
+  --line: #dcebed;
+  --mint: #e2f8f5;
+
+  --topbar-h: 70px;
+  --sidebar-width: 210px;
+
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(115deg, #f8ffff 0%, #fff 54%, #f4fffd 100%);
+}
+
+.app-shell button,
+.app-shell a {
+  font: inherit;
+}
+
+.app-shell button {
+  cursor: pointer;
+}
+
+/* ---------- top bar ---------- */
+
+.topbar {
+  height: var(--topbar-h);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 34px;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid #d8e9eb;
+  box-shadow: 0 8px 20px rgba(46, 92, 91, 0.16);
+
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+
+.brand {
+  width: 160px;
+  display: flex;
+  align-items: center;
+  flex: 0 0 160px;
+}
+
+.brand-logo {
+  width: 160px;
+  height: 52px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.top-divider {
+  height: 42px;
+  width: 1px;
+  background: #cbdadd;
+}
+
+.page-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 700;
+  margin-left: 0;
+}
+
+.page-label svg {
+  width: 27px;
+  height: 27px;
+}
+
+.top-spacer {
+  flex: 1;
+}
+
+.icon-button {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #203541;
+  box-shadow: 0 8px 20px rgba(46, 92, 91, 0.16);
+}
+
+.icon-button:hover,
+.profile-button:hover {
+  background: #effaf8;
+}
+
+.icon-button svg {
+  width: 25px;
+  height: 25px;
+}
+
+.notification-dot {
+  position: absolute;
+  right: 5px;
+  top: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--teal);
+  border: 2px solid white;
+}
+
+/* ---------- profile button + dropdown ---------- */
+
+.profile-wrap {
+  position: relative;
+}
+
+.profile-button {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border: 0;
+  background: transparent;
+  padding: 6px 9px;
+  border-radius: 24px;
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.profile-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.avatar {
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: linear-gradient(135deg, #20c5b9, #079e98);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.profile-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 170px;
+  padding: 8px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  box-shadow: 0 12px 30px rgba(25, 70, 76, 0.13);
+  display: none;
+  z-index: 300;
+}
+
+.profile-menu.open {
+  display: block;
+}
+
+.profile-menu a,
+.profile-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.profile-menu a:hover,
+.profile-menu button:hover {
+  background: #effaf8;
+  color: var(--teal-dark);
+}
+
+/* ---------- sidebar + content ---------- */
+
+.app-layout {
+  display: flex;
+  min-height: calc(100vh - var(--topbar-h));
+}
+
+/* Fixed sidebar: remains in place while the page content scrolls */
+.sidebar {
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  bottom: 0;
+
+  width: var(--sidebar-width);
+  box-sizing: border-box;
+  padding: 38px 13px 25px;
+
+  background: rgba(255, 255, 255, 0.96);
+  border-right: 1px solid #dcebed;
+  box-shadow: 0 8px 20px rgba(46, 92, 91, 0.16);
+
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 100;
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  width: 100%;
+  min-height: 61px;
+  padding: 0 29px;
+  box-sizing: border-box;
+  border: 0;
+  background: transparent;
+  border-radius: 13px;
+  color: #17232b;
+  text-decoration: none;
+  text-align: left;
+  font-size: 18px;
+  font-weight: 500;
+  transition: background 0.18s, color 0.18s;
+}
+
+.nav-link svg {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.nav-link:hover {
+  background: #f0fbf9;
+  color: var(--teal-dark);
+}
+
+.nav-link.active {
+  background: #e0f6f4;
+  color: #078f89;
+  font-weight: 700;
+}
+
+.nav-separator {
+  height: 1px;
+  background: #d8e5e7;
+  margin: 21px 22px 20px;
+}
+
+/* Main content is offset by the fixed sidebar width */
+.main {
+  position: relative;
+  isolation: isolate;
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--sidebar-width);
+  padding: 52px clamp(28px, 4.2vw, 70px) 48px;
+  overflow: hidden;
+}
+
+.main::before,
+.main::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  width: 620px;
+  height: 340px;
+  opacity: 0.78;
+}
+
+.main::before {
+  top: -180px;
+  left: -160px;
+  border-radius: 0 0 70% 0;
+  background: linear-gradient(135deg, #74e2d7, rgba(220, 255, 251, 0.3));
+  transform: rotate(-9deg);
+}
+
+.main::after {
+  right: -280px;
+  bottom: -230px;
+  border-radius: 70% 0 0 0;
+  background: linear-gradient(315deg, #70dfd4, rgba(221, 255, 250, 0.25));
+  transform: rotate(-10deg);
+}
+
+/* ---------- placeholder page for sections that are not built yet ---------- */
+
+.coming-soon {
+  max-width: 520px;
+  margin: 40px auto;
+  padding: 0 20px;
+  text-align: center;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  color: #14252c;
+}
+
+.coming-soon h1 {
+  margin: 0 0 10px;
+  font-size: 38px;
+  color: #087f7c;
+}
+
+.coming-soon p {
+  margin: 0 0 18px;
+  color: #536675;
+  font-size: 18px;
+}
+
+.coming-soon a {
+  color: #079f98;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.coming-soon a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- smaller screens ---------- */
+
+@media (max-width: 1100px) {
+  .app-shell {
+    --sidebar-width: 230px;
+  }
+
+  .sidebar {
+    width: var(--sidebar-width);
+  }
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    height: 70px;
+    padding: 0 17px;
+    gap: 14px;
+  }
+
+  .app-shell {
+    --topbar-h: 70px;
+  }
+
+  .brand {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .brand-logo {
+    width: 120px;
+    height: 43px;
+  }
+
+  .top-divider {
+    height: 42px;
+  }
+
+  .page-label {
+    font-size: 18px;
+    gap: 8px;
+  }
+
+  .page-label svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .profile-button {
+    gap: 7px;
+    font-size: 15px;
+    padding: 4px;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 17px;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .main {
+    margin-left: 0;
+    padding: 30px 18px 35px;
+  }
+}
+
+@media (max-width: 390px) {
+  .page-label {
+    display: none;
+  }
+
+  .profile-button > span:not(.avatar) {
+    display: none;
+  }
+
+  .topbar {
+    gap: 10px;
+  }
+}
+
+/* ---- Total credits pill in the top bar ---- */
+.credit-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  margin-right: 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--teal-dark);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.credit-pill strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.credit-pill:hover {
+  border-color: var(--teal);
+}
+
+@media (max-width: 560px) {
+  .credit-pill span:last-child {
+    display: none;
+  }
+}

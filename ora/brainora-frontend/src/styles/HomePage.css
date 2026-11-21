@@ -1,0 +1,149 @@
+
+  /* Home page content: the welcome banner and the three quick-access cards.
+   Sizes use clamp(min, scales-with-screen, max) so they match the design on a wide screen
+   and shrink smoothly on a laptop. */
+
+.welcome {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 25px;
+  position: relative;
+}
+.welcome-copy { padding: 4px 0 16px clamp(8px, 2vw, 39px); }
+.eyebrow {
+  margin: 0 0 clamp(8px, .8vw, 14px);
+  font-size: clamp(26px, 2.34vw, 44px);
+  font-weight: 400;
+  color: #000000;
+}
+.welcome h1 {
+  margin: 0;
+  font-size: clamp(40px, 4.0vw, 80px);
+  line-height: 1.02;
+  letter-spacing: -2.5px;
+  color: #079b96;
+  font-weight: 900;
+  font-style: italic;
+  overflow-wrap: break-word;
+  
+}
+
+.welcome-subtitle {
+  margin: clamp(12px, 1vw, 18px) 0 0;
+  font-size: clamp(18px, 1.54vw, 29px);
+  color: #3f4b7a;
+}
+.hero-stage {
+  position: relative;
+  width: clamp(340px, calc(80vw - 534px), 971px);   /* 971px = the picture's real size, reached on wide screens */
+  margin-bottom: -14px;                              /* lets the picture's soft base tuck under the cards */
+}
+.hero-art { display: block; width: 100%; height: auto; }
+
+/* ---------- the rolling "Recile" logo on the monitor screen ----------
+   left/top/width/height are percentages of the picture, so it stays on the screen at any size.
+   The whole logo is one tall strip (the logo repeated a few times) that slides up like a counter. */
+.rolling-logo {
+  position: absolute;
+  left: 46.19%;
+  top: 37.66%;
+  width: 16.07%;
+  height: 8.17%;
+  overflow: hidden;                         /* only one logo-sized window of the strip is visible */
+  pointer-events: none;
+}
+.reel-strip {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  will-change: transform;
+  animation: logo-roll 2.6s infinite;       /* 3.6s total = 2s standing still + 1.6s rolling */
+}
+.reel-glyph {
+  display: block;
+  width: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+@keyframes logo-roll {
+  /* 0% to 55%: the logo stays put (2 seconds) */
+  0%, 55% {
+    transform: translateY(0);
+    filter: blur(0px);
+    animation-timing-function: cubic-bezier(.65, .01, .3, 1);   /* slow start, fast middle, soft landing */
+  }
+  /* 55% to 100%: the strip slides up past the repeated logos and lands on the last copy,
+     which looks exactly like the first one, so the loop restarts without a jump */
+  78%  { filter: blur(1px); }
+  100% { transform: translateY(var(--end)); filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reel-strip { animation: none; }          /* people who turn off animations in their system see a still logo */
+}
+
+.quick-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(14px, 1.6vw, 30px);
+  padding: clamp(12px, 1.2vw, 23px);
+  border: 1px solid #e6f1f2;
+  border-radius: clamp(22px, 1.8vw, 34px);
+  background: rgba(255,255,255,.5);
+  box-shadow: 0 8px 22px rgba(42,137,143,.05);
+  position: relative;
+  margin-top: -2px;
+}
+.quick-card {
+  min-height: clamp(104px, 8.7vw, 163px);
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 1.45vw, 27px);
+  padding: 0 clamp(14px, 1.4vw, 26px);
+  border: 1px solid #e7f0f1;
+  border-radius: clamp(20px, 1.6vw, 30px);
+  background: rgba(255,255,255,.92);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 6px 18px rgba(137, 95, 33, 0.07);
+  transition: transform .18s, box-shadow .18s, border-color .18s;
+}
+.quick-card:hover {
+  transform: translateY(-3px);
+  border-color: #b7e9e4;
+  box-shadow: 0 10px 22px rgba(33,132,137,.12);
+}
+.quick-icon {
+  width: clamp(62px, 4.9vw, 92px);
+  height: clamp(62px, 4.9vw, 92px);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: clamp(22px, 1.7vw, 32px);
+  background: #e3f8f4;
+  color: #079b94;
+}
+.quick-icon svg { width: 65%; height: 65%; }
+.quick-card h2 { margin: 0 0 8px; font-size: clamp(18px, 1.33vw, 25px); font-weight: 700; color: #0c1722; }
+.quick-card p { margin: 0; font-size: clamp(14px, 1.06vw, 20px); line-height: 1.4; color: #4a5683; }
+
+/* ---------- smaller screens ---------- */
+@media (max-width: 1100px) {
+  .welcome-copy { padding-left: 5px; }
+  .quick-panel { gap: 13px; padding: 14px; }
+  .quick-card { gap: 12px; padding: 0 13px; }
+}
+@media (max-width: 760px) {
+  .welcome { grid-template-columns: 1fr; gap: 0; text-align: center; padding: 10px 0 30px; }
+  .welcome-copy { padding: 0; }
+  .eyebrow { font-size: 25px; }
+  .welcome h1 { font-size: 58px; }
+  .welcome-subtitle { font-size: 18px; margin-top: 12px; }
+  .hero-stage { width: min(100%, 460px); margin: 14px auto 0; }
+  .quick-panel { grid-template-columns: 1fr; gap: 12px; padding: 12px; border-radius: 22px; }
+  .quick-card { min-height: 100px; border-radius: 19px; padding: 0 17px; }
+  .quick-icon { width: 60px; height: 60px; }
+  .quick-card h2 { font-size: 18px; }
+  .quick-card p { font-size: 14px; }
+}
+ 
