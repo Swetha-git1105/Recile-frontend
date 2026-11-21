@@ -19,6 +19,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ResourcesPage from "./pages/ResourcesPage";
 import UploadResourcePage from "./pages/UploadResourcePage";
 import LearnPage from "./pages/LearnPage";
+import TrackPage from "./pages/TrackPage";
 function ProtectedLayout() {
   const { user } = useAuth();
 
@@ -94,10 +95,7 @@ function AppRoutes() {
   path="/learn"
   element={<LearnPage />}
 />
-        <Route
-          path="/tracking"
-          element={<ComingSoonPage title="Track" />}
-        />
+        <Route path="/tracking" element={<TrackPage />} />
 
         <Route
           path="/updates"
