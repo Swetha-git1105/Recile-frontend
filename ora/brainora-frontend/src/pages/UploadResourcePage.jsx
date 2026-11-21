@@ -1,75 +1,19 @@
-
 import { useMemo, useRef, useState } from "react";
 import { uploadResource } from "../services/api";
+import {
+  BEYOND_CATEGORIES,
+  COMMON_DEPARTMENT,
+  DEPARTMENTS,
+  MAX_DOCUMENT_SIZE,
+  MAX_VIDEO_SIZE,
+  RESOURCE_TYPES,
+  SEMESTERS,
+  getCatalogueSubjects,
+  hasCatalogue,
+} from "../data/academicData";
 import "../styles/UploadResourcePage.css";
 
-const DEPARTMENTS = [
-  { value: "CIVIL", label: "B.E. Civil Engineering" },
-  { value: "CSE", label: "B.E. Computer Science and Engineering" },
-  { value: "EEE", label: "B.E. Electrical and Electronics Engineering" },
-  { value: "ECE", label: "B.E. Electronics and Communication Engineering" },
-  { value: "ICE", label: "B.E. Instrumentation and Control Engineering" },
-  { value: "MECH", label: "B.E. Mechanical Engineering" },
-  { value: "RAI", label: "B.E. Robotics and Artificial Intelligence" },
-  { value: "AIDS", label: "B.Tech. Artificial Intelligence and Data Science" },
-  { value: "VLSI", label: "B.Tech. Electronics Engineering (VLSI Design & Technology)" },
-  { value: "DESIGN", label: "B.Des. Design" },
-];
-
-const SUBJECTS_BY_SEMESTER = {
-  "Semester 1": [
-    "Calculus and its Applications",
-    "Programming for Problem Solving",
-    "English Language Proficiency",
-    "Basics of Electrical and Electronic Systems",
-  ],
-  "Semester 2": [
-    "Transforms and Applications",
-    "Sensors for Engineering Applications",
-    "Applied Chemistry",
-    "Python Programming",
-    "Digital Design",
-    "Tamils and Technology",
-  ],
-  "Semester 3": [
-    "Linear Algebra",
-    "Discrete Structures",
-    "Data Structures",
-    "Computer Organization and Architecture",
-    "Object Oriented Programming",
-    "Project and Finance Management",
-  ],
-  "Semester 4": [
-    "Statistical Methods and Stochastic Processes",
-    "Database Management Systems",
-    "Design and Analysis of Algorithms",
-    "Theory of Computation",
-    "Software Engineering",
-  ],
-  "Semester 5": [
-    "Operating Systems",
-    "Compiler Design",
-    "Computer Networks",
-    "Artificial Intelligence",
-  ],
-  "Semester 6": [
-    "Graph Theory",
-    "Machine Learning",
-    "Embedded Systems",
-  ],
-  "Semester 7": [
-    "Parallel and Distributed Systems",
-    "Cryptography and Network Security",
-  ],
-  "Semester 8": [
-    "Project Work II",
-  ],
-};
-
-const RESOURCE_TYPES = ["Notes", "QP", "Assignment", "Video", "Other"];
 const ACCEPTED_EXTENSIONS = ".pdf,.ppt,.pptx,.doc,.docx,.mp4";
-const MAX_DOCUMENT_SIZE = 25 * 1024 * 1024;
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
 
 export default function UploadResourcePage({ onUpload, onCancel }) {
   const fileInputRef = useRef(null);
@@ -79,6 +23,7 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
   const [department, setDepartment] = useState("");
   const [semester, setSemester] = useState("");
   const [subject, setSubject] = useState("");
+  const [category, setCategory] = useState("");
   const [type, setType] = useState("Notes");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
@@ -87,17 +32,23 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const subjects = useMemo(() => {
-    return SUBJECTS_BY_SEMESTER[semester] || [];
-  }, [semester]);
-
   const isSubjectScope = scope === "SUBJECT";
+
+  // Verified subject list for this department + semester (if we have one).
+  const subjects = useMemo(
+    () => getCatalogueSubjects(department, semester),
+    [department, semester]
+  );
+
+  // Departments without a verified list let the student type the subject.
+  const departmentHasCatalogue = hasCatalogue(department);
 
   function handleScopeChange(value) {
     setScope(value);
     setDepartment("");
     setSemester("");
     setSubject("");
+    setCategory("");
     setError("");
     setSuccess("");
   }
@@ -124,13 +75,18 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
     if (selectedFile.size > maxSize) {
       setError(
         isVideo
-          ? "Video size must not exceed 100 MB."
+          ? "Video size must not exceed 25 MB."
           : "Document size must not exceed 25 MB."
       );
       return;
     }
 
     setFile(selectedFile);
+
+    // Picking an mp4 switches the type to "Video" automatically.
+    if (isVideo) {
+      setType("Video");
+    }
   }
 
   async function handleSubmit(event) {
@@ -144,8 +100,13 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
       return;
     }
 
-    if (isSubjectScope && (!department || !semester || !subject)) {
+    if (isSubjectScope && (!department || !semester || !subject.trim())) {
       setError("Please select department, semester and subject.");
+      return;
+    }
+
+    if (!isSubjectScope && !category) {
+      setError("Please choose a Beyond the Syllabus category.");
       return;
     }
 
@@ -154,12 +115,14 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
       return;
     }
 
+    // Beyond the Syllabus resources are saved with department "ALL" and the
+    // category name in the subject field, so the Learn page can find them.
     const resource = {
       title: title.trim(),
       scope,
-      department: isSubjectScope ? department : "ALL",
+      department: isSubjectScope ? department : COMMON_DEPARTMENT,
       semester: isSubjectScope ? semester : "",
-      subject: isSubjectScope ? subject : "",
+      subject: isSubjectScope ? subject.trim() : category,
       type,
       description: description.trim(),
       file,
@@ -174,12 +137,14 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
         onUpload(result);
       }
 
-      setSuccess("Resource uploaded successfully!");
+      // The server message includes the credits earned.
+      setSuccess(result?.message || "Resource uploaded successfully!");
 
       setTitle("");
       setDepartment("");
       setSemester("");
       setSubject("");
+      setCategory("");
       setType("Notes");
       setDescription("");
       setFile(null);
@@ -222,6 +187,7 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter resource title"
+              maxLength={180}
               required
             />
           </div>
@@ -290,7 +256,7 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
                   required
                 >
                   <option value="">Select semester</option>
-                  {Object.keys(SUBJECTS_BY_SEMESTER).map((item) => (
+                  {SEMESTERS.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
@@ -300,26 +266,60 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
 
               <div className="upload-field">
                 <label htmlFor="subject">Subject *</label>
-                <select
-                  id="subject"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  disabled={!semester}
-                  required
-                >
-                  <option value="">Select subject</option>
-                  {subjects.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
+
+                {departmentHasCatalogue ? (
+                  <select
+                    id="subject"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    disabled={!semester}
+                    required
+                  >
+                    <option value="">Select subject</option>
+                    {subjects.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    id="subject"
+                    type="text"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder={
+                      semester
+                        ? "Type the subject name"
+                        : "Select semester first"
+                    }
+                    maxLength={180}
+                    disabled={!semester}
+                    required
+                  />
+                )}
               </div>
             </div>
           ) : (
-            <div className="upload-common-notice">
-              This resource will be shared in Beyond the Syllabus and will
-              not be linked to a particular department or semester.
+            <div className="upload-field">
+              <label htmlFor="category">Beyond the Syllabus category *</label>
+              <select
+                id="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+              >
+                <option value="">Select category</option>
+                {BEYOND_CATEGORIES.map((item) => (
+                  <option key={item.title} value={item.title}>
+                    {item.title}
+                  </option>
+                ))}
+              </select>
+              <small>
+                This resource will be shared with all students and will not be
+                linked to a particular department or semester.
+              </small>
             </div>
           )}
 
@@ -345,6 +345,7 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Briefly describe this resource..."
+              maxLength={300}
               rows={4}
             />
           </div>
@@ -384,7 +385,7 @@ export default function UploadResourcePage({ onUpload, onCancel }) {
 
               <span className="upload-drop-icon">↑</span>
               <strong>Click to browse or drag your file here</strong>
-              <small>PDF, PPT, DOC up to 25 MB | MP4 up to 100 MB</small>
+              <small>PDF, PPT, DOC up to 25 MB | MP4 up to 25 MB</small>
             </div>
 
             {file && (
