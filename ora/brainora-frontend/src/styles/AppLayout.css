@@ -45,6 +45,28 @@
   z-index: 200;
 }
 
+/* Menu button: shown only on phones and small tablets (see media query) */
+.menu-button {
+  display: none;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #203541;
+}
+
+.menu-button svg {
+  width: 26px;
+  height: 26px;
+}
+
+.menu-button:hover {
+  background: #effaf8;
+}
+
 .brand {
   width: 160px;
   display: flex;
@@ -217,6 +239,16 @@
   z-index: 100;
 }
 
+/* Logo + close button at the top of the drawer: mobile only */
+.drawer-head {
+  display: none;
+}
+
+/* Dimmed background behind the open drawer: mobile only */
+.drawer-backdrop {
+  display: none;
+}
+
 .nav-list {
   display: flex;
   flex-direction: column;
@@ -336,89 +368,6 @@
   text-decoration: underline;
 }
 
-/* ---------- smaller screens ---------- */
-
-@media (max-width: 1100px) {
-  .app-shell {
-    --sidebar-width: 230px;
-  }
-
-  .sidebar {
-    width: var(--sidebar-width);
-  }
-}
-
-@media (max-width: 760px) {
-  .topbar {
-    height: 70px;
-    padding: 0 17px;
-    gap: 14px;
-  }
-
-  .app-shell {
-    --topbar-h: 70px;
-  }
-
-  .brand {
-    width: auto;
-    flex: 0 0 auto;
-  }
-
-  .brand-logo {
-    width: 120px;
-    height: 43px;
-  }
-
-  .top-divider {
-    height: 42px;
-  }
-
-  .page-label {
-    font-size: 18px;
-    gap: 8px;
-  }
-
-  .page-label svg {
-    width: 22px;
-    height: 22px;
-  }
-
-  .profile-button {
-    gap: 7px;
-    font-size: 15px;
-    padding: 4px;
-  }
-
-  .avatar {
-    width: 36px;
-    height: 36px;
-    font-size: 17px;
-  }
-
-  .sidebar {
-    display: none;
-  }
-
-  .main {
-    margin-left: 0;
-    padding: 30px 18px 35px;
-  }
-}
-
-@media (max-width: 390px) {
-  .page-label {
-    display: none;
-  }
-
-  .profile-button > span:not(.avatar) {
-    display: none;
-  }
-
-  .topbar {
-    gap: 10px;
-  }
-}
-
 /* ---- Total credits pill in the top bar ---- */
 .credit-pill {
   display: inline-flex;
@@ -446,8 +395,197 @@
   border-color: var(--teal);
 }
 
+/* ---------- smaller screens ---------- */
+
+@media (max-width: 1100px) {
+  .app-shell {
+    --sidebar-width: 230px;
+  }
+
+  .sidebar {
+    width: var(--sidebar-width);
+  }
+}
+
+/* ===== Phones and small tablets: the sidebar becomes a slide-in drawer ===== */
+@media (max-width: 760px) {
+  .app-shell {
+    --topbar-h: 64px;
+  }
+
+  .topbar {
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  .menu-button {
+    display: grid;
+  }
+
+  .brand {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .brand-logo {
+    width: 110px;
+    height: 40px;
+  }
+
+  .page-label {
+    font-size: 18px;
+    gap: 8px;
+  }
+
+  .page-label svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .profile-button {
+    gap: 7px;
+    font-size: 15px;
+    padding: 4px;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 17px;
+  }
+
+  /* The sidebar slides in from the left over the page */
+  .sidebar {
+    top: 0;
+    width: min(82vw, 300px);
+    padding: 0 13px 25px;
+    z-index: 400;
+
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0s linear 0.25s;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 0.25s ease;
+    box-shadow: 12px 0 40px rgba(20, 37, 44, 0.25);
+  }
+
+  .drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--topbar-h);
+    margin-bottom: 14px;
+    padding: 0 4px 0 8px;
+    border-bottom: 1px solid #d8e5e7;
+  }
+
+  .drawer-logo {
+    width: 120px;
+    height: 42px;
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  .drawer-close {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: #203541;
+  }
+
+  .drawer-close svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .drawer-close:hover {
+    background: #effaf8;
+  }
+
+  .drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 350;
+    background: rgba(20, 37, 44, 0.45);
+  }
+
+  .nav-link {
+    min-height: 56px;
+    padding: 0 20px;
+  }
+
+  /* The page uses the full width */
+  .main {
+    margin-left: 0;
+    padding: 28px 18px 35px;
+  }
+
+  .main::before,
+  .main::after {
+    width: 360px;
+    height: 220px;
+  }
+}
+
+/* The page name and divider would crowd the top bar */
+@media (max-width: 680px) {
+  .top-divider,
+  .page-label {
+    display: none;
+  }
+}
+
+/* Credits: show only the star and the number */
 @media (max-width: 560px) {
+  .credit-pill {
+    margin-right: 0;
+    padding: 0 11px;
+  }
+
   .credit-pill span:last-child {
     display: none;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .profile-button > span:not(.avatar),
+  .profile-button > svg {
+    display: none;
+  }
+
+  .icon-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .icon-button svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .main {
+    padding: 24px 14px 30px;
+  }
+}
+
+@media (max-width: 340px) {
+  .brand-logo {
+    width: 84px;
+    height: 32px;
   }
 }

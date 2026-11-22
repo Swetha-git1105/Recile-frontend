@@ -18,6 +18,23 @@ const NAV_ITEMS = [
   { to: '/profile', label: 'Profile', Icon: UserIcon },
 ];
 
+// Small icons for the mobile menu button and the drawer's close button.
+function MenuIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+  );
+}
+
 // Frame shown around every logged-in page. <Outlet /> is where the current page is drawn.
 function AppLayout() {
   const { user, logout } = useAuth();
@@ -26,6 +43,7 @@ function AppLayout() {
   const { pathname } = useLocation();
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);   // mobile sidebar drawer
   const menuRef = useRef(null);   // points at the profile area, to detect clicks outside it
 
   // Close the dropdown when the user clicks anywhere else on the page.
@@ -39,7 +57,31 @@ function AppLayout() {
     return () => document.removeEventListener('click', handleClickOutside);   // cleanup when the layout unmounts
   }, []);
 
+  // Close the drawer whenever the page changes (a sidebar link was tapped).
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+
+  // While the drawer is open: Escape closes it and the page behind it does not scroll.
+  useEffect(() => {
+    if (!drawerOpen) return undefined;
+
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') setDrawerOpen(false);
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [drawerOpen]);
+
   function handleLogout() {
+    setDrawerOpen(false);
     logout();               // removes the token and clears the user
     navigate('/login');
   }
@@ -54,6 +96,18 @@ function AppLayout() {
   return (
     <div className="app-shell">
       <header className="topbar">
+        {/* Only visible on phones and small tablets: opens the sidebar drawer */}
+        <button
+          className="menu-button"
+          type="button"
+          aria-label="Open menu"
+          aria-expanded={drawerOpen}
+          aria-controls="app-sidebar"
+          onClick={() => setDrawerOpen(true)}
+        >
+          <MenuIcon />
+        </button>
+
         <Link className="brand" to="/" aria-label="Recile home">
           <img className="brand-logo" src={logo} alt="Recile" />
         </Link>
@@ -103,8 +157,33 @@ function AppLayout() {
         </div>
       </header>
 
+      {/* Dimmed area behind the open drawer: tap it to close the menu */}
+      {drawerOpen && (
+        <div
+          className="drawer-backdrop"
+          onClick={() => setDrawerOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       <div className="app-layout">
-        <aside className="sidebar">
+        <aside
+          id="app-sidebar"
+          className={`sidebar${drawerOpen ? ' open' : ''}`}
+        >
+          {/* Only visible inside the mobile drawer */}
+          <div className="drawer-head">
+            <img className="drawer-logo" src={logo} alt="Recile" />
+            <button
+              className="drawer-close"
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setDrawerOpen(false)}
+            >
+              <CloseIcon />
+            </button>
+          </div>
+
           <nav className="nav-list" aria-label="Main navigation">
             {NAV_ITEMS.map(({ to, label, Icon, end }) => (
               <NavLink
