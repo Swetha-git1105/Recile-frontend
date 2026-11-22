@@ -1,0 +1,166 @@
+/* ONE card look for the whole app: the card stays WHITE and only its
+   border carries the green lining (a thin teal line with a very faint
+   green halo around it). No green fill inside the cards.
+
+   To give a new card this look, add its class name to the list below.
+   Everything is scoped under .app-shell so it wins over the older page
+   styles without !important. */
+
+.app-shell {
+  --lining: #ffffff;          /* the green border line */
+  --lining-hover: #ffffff;    /* the border while hovering a clickable card */
+  --lining-halo: 0 0 0 3px rgba(32, 189, 178, 0.07), 0 6px 16px rgba(7, 143, 137, 0.07);
+  --lining-halo-hover: 0 0 0 4px rgba(32, 189, 178, 0.14), 0 10px 24px rgba(7, 143, 137, 0.12);
+
+  --lift: -3px;               /* how far a card rises on hover */
+  --lift-small: -1px;         /* how far a button rises on hover */
+}
+
+/* people who turn animations off in their system get no movement */
+@media (prefers-reduced-motion: reduce) {
+  .app-shell {
+    --lift: 0px;
+    --lift-small: 0px;
+  }
+}
+
+/* ---------- the cards: white inside, green lining ---------- */
+.app-shell :is(
+  .quick-card,
+  .home-notes,
+  .learn-explorer,
+  .learn-resource-card,
+  .learn-subject-card,
+  .beyond-card,
+  .credits-stat,
+  .solve-question,
+  .solve-tabs,
+  .no-results,
+  .resource-card,
+  .resources-empty,
+  .track-stat-card,
+  .track-panel,
+  .track-empty,
+  .profile-summary-card,
+  .my-uploads-card,
+  .notifications-list li
+) {
+  border: 1px solid var(--lining);
+  background: #ffffff;
+  box-shadow: var(--lining-halo);
+}
+
+/* the frame around the three Home cards: green line only, as before */
+.app-shell .quick-panel {
+  border-color: var(--lining);
+}
+
+/* ---------- animation: cards that are items in a list or grid ----------
+   They rise a little and the lining gets stronger on hover. The big
+   containers (forms, tables, panels) keep the lining but stay still. */
+.app-shell :is(
+  .quick-card,
+  .learn-resource-card,
+  .learn-subject-card,
+  .beyond-card,
+  .resource-card,
+  .solve-question,
+  .track-stat-card,
+  .credits-stat,
+  .notifications-list li
+) {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.app-shell :is(
+  .quick-card,
+  .learn-resource-card,
+  .learn-subject-card,
+  .beyond-card,
+  .resource-card,
+  .solve-question,
+  .track-stat-card,
+  .credits-stat,
+  .notifications-list li
+):hover {
+  transform: translateY(var(--lift));
+  border-color: var(--lining-hover);
+  background: #ffffff;
+  box-shadow: var(--lining-halo-hover);
+}
+
+/* big containers: only the lining gets a little stronger on hover */
+.app-shell :is(.track-panel, .profile-summary-card, .my-uploads-card) {
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.app-shell :is(.track-panel, .profile-summary-card, .my-uploads-card):hover {
+  border-color: var(--lining-hover);
+  box-shadow: var(--lining-halo-hover);
+}
+
+/* ---------- buttons: same green on hover, a tiny rise ---------- */
+.app-shell :is(
+  .learn-resource-actions button,
+  .resource-card-actions button,
+  .notifications-markall,
+  .notifications-refresh,
+  .notifications-action,
+  .solve-card-actions button,
+  .solve-attach,
+  .profile-edit-button
+) {
+  transition: transform 0.18s ease, box-shadow 0.18s ease,
+    border-color 0.18s ease, background 0.18s ease;
+}
+
+.app-shell :is(
+  .learn-resource-actions button,
+  .resource-card-actions button,
+  .notifications-markall,
+  .notifications-refresh,
+  .notifications-action,
+  .solve-card-actions button,
+  .solve-attach,
+  .profile-edit-button
+):hover:not(:disabled):not(.danger):not(.resource-delete-button) {
+  transform: translateY(var(--lift-small));
+  border-color: var(--lining-hover);
+  box-shadow: 0 4px 10px rgba(7, 143, 137, 0.1);
+}
+
+/* ---------- Credits: the Balance card keeps its soft mint fill ---------- */
+.app-shell .credits-stat.is-primary {
+  border-color: var(--lining-hover);
+  background: #e8f8f5;
+}
+
+/* ---------- small things that match the same green ---------- */
+.app-shell .home-notes li.unread,
+.app-shell .notifications-list li.unread {
+  background: #f1fbf9;
+  box-shadow: inset 3px 0 0 #20bdb2;
+}
+
+.app-shell .leaderboard-list li.me {
+  background: #e8f8f5;
+  box-shadow: inset 3px 0 0 #f4f6f6;
+}
+
+.app-shell .solve-form input[type="text"],
+.app-shell .solve-form textarea {
+  border-color: #cfe6e4;
+}
+
+/* a soft teal ring (instead of the browser's black one) on keyboard focus */
+.app-shell .nav-link:focus-visible,
+.app-shell .quick-card:focus-visible,
+.app-shell .learn-subject-card:focus-visible,
+.app-shell .beyond-card:focus-visible {
+  outline: 2px solid rgba(32, 189, 178, 0.7);
+  outline-offset: 2px;
+}
+
+.app-shell .nav-link:focus:not(:focus-visible) {
+  outline: none;
+}

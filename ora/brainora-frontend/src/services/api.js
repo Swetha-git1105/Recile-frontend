@@ -9,6 +9,10 @@ export const API_URL = (
 console.log('Brainora API URL:', API_URL);
 const TOKEN_KEY = 'token';
 
+// Shown when a student does not have enough credits to open a resource.
+const NOT_ENOUGH_CREDITS =
+  'Not enough credits. Upload a resource to earn credits.';
+
 // ==========================================
 // JWT TOKEN MANAGEMENT
 // ==========================================
@@ -130,10 +134,20 @@ async function request(endpoint, options = {}) {
 
     if (response.status === 401 && auth) {
       handleUnauthorized();
+
       throw httpError(
         'Session expired or invalid token. Please log out and log in again.',
         401
       );
+    }
+
+    // Not enough credits ("402 Payment Required"): show a clear message.
+    // A specific message sent by the backend is kept; the generic
+    // "Payment Required" text is replaced.
+    if (response.status === 402) {
+      const isGeneric = !message || /payment/i.test(String(message));
+
+      throw httpError(isGeneric ? NOT_ENOUGH_CREDITS : message, 402);
     }
 
     if (response.status === 403) {
@@ -350,6 +364,10 @@ export async function getResourceFileBlob(
       );
     }
 
+    if (response.status === 402) {
+      throw httpError(NOT_ENOUGH_CREDITS, 402);
+    }
+
     if (response.status === 403) {
       throw new Error(
         'You do not have permission to access this resource.'
@@ -447,6 +465,204 @@ export function getRatingSummaries() {
 export function deleteResource(id) {
   return request(`/api/resources/${id}`, {
     method: 'DELETE',
+    auth: true,
+  });
+}
+
+// ==========================================
+// CREDIT SYSTEM
+// ==========================================
+
+// { balance, earned, spent, freeTotal, freeUsed, freeLeft, successfulUploads,
+//   uploadsToNextFree, accessCost, baseFreeAccesses, uploadsPerExtraFree,
+//   openedResourceIds }
+export function getCreditSummary() {
+  return request('/api/credits/summary', {
+    method: 'GET',
+    auth: true,
+  });
+}
+
+// [{ kind: EARNED | SPENT | FREE, label, title, amount, at, resourceId }]
+export function getCreditHistory() {
+  return request('/api/credits/history', {
+    method: 'GET',
+    auth: true,
+  });
+}
+
+// ==========================================
+// NOTIFICATIONS AND RESOURCE REQUESTS
+// ==========================================
+
+// { unreadCount, items: [{ id, type, message, resourceId, seen, createdAt }] }
+export function getNotifications() {
+  return request('/api/notifications', {
+    method: 'GET',
+    auth: true,
+  });
+}
+
+export async function getNotificationCount() {
+  const data = await request('/api/notifications/count', {
+    method: 'GET',
+    auth: true,
+  });
+
+  return Number(data?.unreadCount) || 0;
+}
+
+export function markNotificationRead(id) {
+  return request(`/api/notifications/${encodeURIComponent(id)}/read`, {
+    method: 'POST',
+    auth: true,
+  });
+}
+
+export function markAllNotificationsRead() {
+  return request('/api/notifications/read-all', {
+    method: 'POST',
+    auth: true,
+  });
+}
+
+// "Request this resource" (when its file is unavailable).
+// Returns { requestCount, message }.
+export function requestResource(id) {
+  return request(`/api/resources/${encodeURIComponent(id)}/request`, {
+    method: 'POST',
+    auth: true,
+  });
+}
+
+// "Request a resource": a search found nothing, so the student asks for it.
+// Every other student gets a notification.
+// { title, department?, semester?, subject?, details? } -> { message }
+export function requestWantedResource({ title, department, semester, subject, details }) {
+  return request('/api/resources/wanted', {
+    method: 'POST',
+    auth: true,
+    body: { title, department, semester, subject, details },
+  });
+}
+
+// ==========================================
+// TIME FOR SOLVING (questions and answers)
+// ==========================================
+
+export function getQuestions() {
+  return request('/api/questions', {
+    method: 'GET',
+    auth: true,
+  });
+}
+
+// Questions and answers can carry one optional PDF.
+// Without a file a plain JSON request is sent; with a file, a form upload.
+function withFile(fields, file) {
+  const form = new FormData();
+
+  Object.entries(fields).forEach(([key, value]) => form.append(key, value));
+  form.append('file', file);
+
+  return form;
+}
+
+export function askQuestion({ title, body, anonymous, file }) {
+  if (file) {
+    return request('/api/questions', {
+      method: 'POST',
+      auth: true,
+      body: withFile(
+        { title, body: body || '', anonymous: String(Boolean(anonymous)) },
+        file
+      ),
+    });
+  }
+
+  return request('/api/questions', {
+    method: 'POST',
+    auth: true,
+    body: { title, body, anonymous: Boolean(anonymous) },
+  });
+}
+
+// Returns the updated question with all its answers.
+export function answerQuestion(id, { body, anonymous, file }) {
+  const endpoint = `/api/questions/${encodeURIComponent(id)}/answers`;
+
+  if (file) {
+    return request(endpoint, {
+      method: 'POST',
+      auth: true,
+      body: withFile(
+        { body: body || '', anonymous: String(Boolean(anonymous)) },
+        file
+      ),
+    });
+  }
+
+  return request(endpoint, {
+    method: 'POST',
+    auth: true,
+    body: { body, anonymous: Boolean(anonymous) },
+  });
+}
+
+// The PDF attached to a question or an answer, as a Blob (login required).
+export async function getQuestionAttachmentBlob(id) {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error('Please log in to open this file.');
+  }
+
+  let response;
+
+  try {
+    response = await fetch(
+      `${API_URL}/api/questions/attachments/${encodeURIComponent(id)}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  } catch {
+    throw new Error('Cannot connect to the Brainora backend.');
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      response.status === 404
+        ? 'This PDF is no longer available.'
+        : `Unable to open the PDF (${response.status}).`
+    );
+  }
+
+  const blob = await response.blob();
+
+  return new Blob([blob], { type: 'application/pdf' });
+}
+
+export function deleteQuestion(id) {
+  return request(`/api/questions/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    auth: true,
+  });
+}
+
+export function deleteAnswer(id) {
+  return request(`/api/answers/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    auth: true,
+  });
+}
+
+// ==========================================
+// LEADERBOARD
+// ==========================================
+
+// { credits: { entries, me }, resources: { entries, me } }
+export function getLeaderboard() {
+  return request('/api/leaderboard', {
+    method: 'GET',
     auth: true,
   });
 }

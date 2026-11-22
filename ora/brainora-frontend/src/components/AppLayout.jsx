@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useResources } from '../context/ResourceContext';
+import { useNotifications } from '../context/NotificationContext';
 import { formatCredits } from '../utils/credits';
 import {
   DashboardIcon, UserIcon, LogoutIcon, BellIcon, ChevronDownIcon,ResourcesIcon,UploadIcon,
+  CreditsIcon, SolveIcon, TrophyIcon,
 } from './icons';
 import logo from '../assets/logo.png';
 import '../styles/AppLayout.css';
+import '../styles/AppCards.css';
 
 // The sidebar links. Add a new page here and it appears in the sidebar automatically.
 const NAV_ITEMS = [
@@ -15,6 +18,9 @@ const NAV_ITEMS = [
  // { to: '/dashboard', label: 'Dashboard', Icon: DashboardIcon },
   { to: '/learn', label: 'Learn', Icon: ResourcesIcon },
   { to: '/upload', label: 'Upload', Icon: UploadIcon },
+  { to: '/solve', label: 'Solve', Icon: SolveIcon },
+  { to: '/leaderboard', label: 'Leaderboard', Icon: TrophyIcon },
+    { to: '/credits', label: 'Credits', Icon: CreditsIcon },
   { to: '/profile', label: 'Profile', Icon: UserIcon },
 ];
 
@@ -39,6 +45,7 @@ function CloseIcon() {
 function AppLayout() {
   const { user, logout } = useAuth();
   const { totalCredits } = useResources();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -133,10 +140,19 @@ function AppLayout() {
           <span>credits</span>
         </Link>
 
-        <button className="icon-button" type="button" aria-label="Notifications" title="Notifications">
+        <Link
+          className="icon-button"
+          to="/notifications"
+          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+          title="Notifications"
+        >
           <BellIcon />
-          <span className="notification-dot" />
-        </button>
+          {unreadCount > 0 && (
+            <span className="notification-count">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </Link>
 
         <div className="profile-wrap" ref={menuRef}>
           <button

@@ -2,6 +2,7 @@ import { Component, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useAllResources from "../hooks/useAllResources";
 import ResourceItem from "../components/ResourceItem";
+import NoResultsRequest from "../components/NoResultsRequest";
 import {
   BEYOND_CATEGORIES,
   DEPARTMENTS,
@@ -224,10 +225,8 @@ function LearnPageContent() {
               ))}
             </div>
           ) : (
-            <div className="learn-empty">
-              <span>No resources found</span>
-              <p>Try a different word, such as a subject name or “notes”.</p>
-            </div>
+            /* Nothing found: ask everyone for it (popup + notification) */
+            !loading && !error && <NoResultsRequest query={search} />
           )}
         </section>
       ) : (

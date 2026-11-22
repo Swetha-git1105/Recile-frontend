@@ -4,6 +4,7 @@ import heroImage from '../assets/hero.png';
 import RollingLogo from '../components/RollingLogo';
 import { BookIcon, BarChartIcon, CalendarCheckIcon } from '../components/icons';
 import '../styles/HomePage.css';
+import '../styles/HomeCards.css';
 
 // The three quick-access cards. Change the text or links here.
 const QUICK_LINKS = [

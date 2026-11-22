@@ -1,0 +1,194 @@
+/* Credit System tab. Heading and card shape come from LearnPage.css. */
+
+.credits-page {
+  display: grid;
+  gap: 22px;
+}
+
+.credits-page .learn-heading,
+.credits-page .learn-explorer {
+  margin: 0;
+}
+
+.credits-stats {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  margin: 0;
+}
+
+.credits-stat {
+  box-sizing: border-box;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 22px 24px;
+  border: 1px solid #dcebed;
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+.credits-stat span {
+  color: #536675;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.credits-stat strong {
+  color: #14252c;
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.credits-stat small {
+  color: #7a8a94;
+  font-size: 13px;
+}
+
+.credits-stat.is-primary {
+  border-color: #9fdcd5;
+}
+
+.credits-stat.is-primary strong {
+  color: #078f89;
+  font-size: 44px;
+}
+
+.credits-progress {
+  height: 12px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e6f0f0;
+}
+
+.credits-progress div {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #20bdb2, #078f89);
+  transition: width 0.3s ease;
+}
+
+.credits-progress-text {
+  margin: 12px 0 0;
+  color: #536675;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.credits-rules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  margin-top: 6px;
+}
+
+.credits-rules h3 {
+  margin: 0 0 10px;
+  color: #14252c;
+  font-size: 16px;
+}
+
+.credits-rules ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+  color: #3d4f5a;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.credits-history {
+  display: grid;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.credits-history li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid #e8f0f1;
+}
+
+.credits-history li:last-child {
+  border-bottom: 0;
+}
+
+.credits-kind {
+  flex: none;
+  min-width: 62px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.credits-kind.earned {
+  background: #e2f8f5;
+  color: #078f89;
+}
+
+.credits-kind.spent {
+  background: #fdeaea;
+  color: #b3342f;
+}
+
+.credits-kind.free {
+  background: #eef2f5;
+  color: #536675;
+}
+
+.credits-history-text {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.credits-history-text strong {
+  overflow: hidden;
+  color: #14252c;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.credits-history-text small {
+  color: #7a8a94;
+  font-size: 12.5px;
+}
+
+.credits-amount {
+  flex: none;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.credits-amount.earned {
+  color: #078f89;
+}
+
+.credits-amount.spent {
+  color: #b3342f;
+}
+
+.credits-amount.free {
+  color: #7a8a94;
+}
+
+@media (max-width: 760px) {
+  .credits-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .credits-rules {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}

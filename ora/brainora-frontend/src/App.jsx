@@ -9,6 +9,7 @@ import {
 import { useAuth } from "./context/AuthContext";
 import { ResourceProvider, useResources } from "./context/ResourceContext";
 import { RatingProvider } from "./context/RatingContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import LearnSubjectPage from "./pages/LearnSubjectPage";
 import LearnBeyondPage from "./pages/LearnBeyondPage";
 import AppLayout from "./components/AppLayout";
@@ -18,10 +19,14 @@ import HomePage from "./pages/HomePage";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProfilePage from "./pages/ProfilePage";
-import ResourcesPage from "./pages/ResourcesPage";
+import CreditsPage from "./pages/CreditsPage";
+import SolvePage from "./pages/SolvePage";
+import LeaderboardPage from "./pages/LeaderboardPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import UploadResourcePage from "./pages/UploadResourcePage";
 import LearnPage from "./pages/LearnPage";
 import TrackPage from "./pages/TrackPage";
+import ResourcesPage from "./pages/ResourcesPage";
 function ProtectedLayout() {
   const { user } = useAuth();
 
@@ -102,10 +107,13 @@ function AppRoutes() {
 />
         <Route path="/tracking" element={<TrackPage />} />
 
-        <Route
-          path="/updates"
-          element={<ResourcesPage title="Stay Updated" />}
-        />
+        <Route path="/credits" element={<CreditsPage />} />
+        <Route path="/solve" element={<SolvePage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+
+        {/* Notifications and Stay Updated are two separate pages */}
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/updates" element={<ResourcesPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -117,7 +125,9 @@ export default function App() {
   return (
     <ResourceProvider>
       <RatingProvider>
-        <AppRoutes />
+        <NotificationProvider>
+          <AppRoutes />
+        </NotificationProvider>
       </RatingProvider>
     </ResourceProvider>
   );

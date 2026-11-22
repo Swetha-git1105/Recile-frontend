@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { resolveResourceUrl } from "../services/api";
+import { useResources } from "../context/ResourceContext";
 
 const LOADING_PAGE =
   "<!doctype html><title>Loading preview</title>" +
@@ -13,6 +14,17 @@ export default function useResourceFile(resource) {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [opened, setOpened] = useState(false); // true after a preview or download
+  const [unavailable, setUnavailable] = useState(false); // the file is missing (410)
+  const [needsCredits, setNeedsCredits] = useState(false); // not enough credits (402)
+  const { refreshCredits } = useResources();
+
+  // 410 = the file is gone, 402 = no free access left and not enough credits.
+  const handleFailure = useCallback((err, fallback) => {
+    if (err?.status === 410) setUnavailable(true);
+    if (err?.status === 402) setNeedsCredits(true);
+
+    setError(err?.message || fallback);
+  }, []);
 
   const preview = useCallback(async () => {
     // Open the tab first, inside the click, so the browser does not block it.
@@ -29,24 +41,27 @@ export default function useResourceFile(resource) {
     try {
       setBusy("preview");
       setError("");
+      setNeedsCredits(false);
 
       const target = await resolveResourceUrl(resource.id, "preview");
       previewWindow.location.href = target.url;
 
       if (target.revoke) window.setTimeout(target.revoke, 5 * 60 * 1000);
       setOpened(true);
+      refreshCredits(); // the first open may have used a free access or credits
     } catch (err) {
       previewWindow.close();
-      setError(err.message || "Unable to preview this resource.");
+      handleFailure(err, "Unable to preview this resource.");
     } finally {
       setBusy("");
     }
-  }, [resource.id]);
+  }, [resource.id, refreshCredits, handleFailure]);
 
   const download = useCallback(async () => {
     try {
       setBusy("download");
       setError("");
+      setNeedsCredits(false);
 
       const target = await resolveResourceUrl(resource.id, "download");
       const link = document.createElement("a");
@@ -59,12 +74,22 @@ export default function useResourceFile(resource) {
 
       if (target.revoke) window.setTimeout(target.revoke, 60 * 1000);
       setOpened(true);
+      refreshCredits();
     } catch (err) {
-      setError(err.message || "Unable to download this resource.");
+      handleFailure(err, "Unable to download this resource.");
     } finally {
       setBusy("");
     }
-  }, [resource.id, resource.originalFilename, resource.title]);
+  }, [resource.id, resource.originalFilename, resource.title, refreshCredits, handleFailure]);
 
-  return { busy, error, opened, preview, download, setError };
+  return {
+    busy,
+    error,
+    opened,
+    unavailable,
+    needsCredits,
+    preview,
+    download,
+    setError,
+  };
 }

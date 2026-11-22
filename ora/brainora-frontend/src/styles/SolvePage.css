@@ -1,0 +1,337 @@
+/* Time for Solving tab. Heading and card shape come from LearnPage.css. */
+
+.solve-page {
+  display: grid;
+  gap: 22px;
+}
+
+.solve-page .learn-heading,
+.solve-page .learn-explorer {
+  margin: 0;
+}
+
+.solve-form {
+  display: grid;
+  gap: 14px;
+}
+
+.solve-form input[type="text"],
+.solve-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid #dfe8e8;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #14252c;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.solve-form textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.solve-form input[type="text"]:focus,
+.solve-form textarea:focus {
+  border-color: #20bdb2;
+  box-shadow: 0 0 0 4px rgba(32, 189, 178, 0.14);
+}
+
+.solve-form.inline {
+  margin-top: 14px;
+}
+
+.solve-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #3d4f5a;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.solve-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: #078f89;
+}
+
+.solve-form .primary,
+.solve-card-actions button {
+  justify-self: start;
+  height: 44px;
+  padding: 0 22px;
+  border: 1px solid #dfe8e8;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #26384a;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.solve-form .primary {
+  border: 0;
+  background: #078f89;
+  color: #ffffff;
+}
+
+.solve-form .primary:hover:not(:disabled) {
+  background: #067d77;
+}
+
+.solve-form .primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.solve-card-actions button:hover {
+  border-color: #20bdb2;
+}
+
+.solve-card-actions button.danger,
+.solve-link.danger {
+  color: #b3342f;
+}
+
+.solve-error {
+  margin: 0;
+  color: #b3342f;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.solve-list {
+  display: grid;
+  gap: 16px;
+}
+
+.solve-question {
+  padding: 22px 24px;
+  border: 1px solid #dcebed;
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+.solve-question h3 {
+  margin: 0;
+  color: #14252c;
+  font-size: 19px;
+  line-height: 1.35;
+}
+
+.solve-meta {
+  margin: 4px 0 0;
+  color: #7a8a94;
+  font-size: 13px;
+}
+
+.solve-body {
+  margin: 12px 0 0;
+  color: #3d4f5a;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.solve-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.solve-card-actions button {
+  height: 38px;
+  padding: 0 16px;
+}
+
+.solve-answers {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e8f0f1;
+}
+
+.solve-answers h4 {
+  margin: 0;
+  color: #536675;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.solve-answer {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #f4fbfa;
+}
+
+.solve-answer .solve-body {
+  margin-top: 8px;
+}
+
+.solve-link {
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.solve-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 560px) {
+  .solve-question {
+    padding: 18px 16px;
+  }
+
+  .solve-form .primary {
+    width: 100%;
+  }
+}
+
+/* ---------- PDF attachments ---------- */
+
+.solve-file {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.solve-form .solve-file {
+  margin-top: 0;
+}
+
+.solve-attach {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1.5px dashed #8fd8d0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #078f89;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.solve-attach svg {
+  width: 18px;
+  height: 18px;
+}
+
+.solve-attach em {
+  color: #7a8a94;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.solve-attach:hover {
+  border-color: #20bdb2;
+  background: #f1fbf9;
+}
+
+.solve-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  min-height: 42px;
+  padding: 0 14px 0 10px;
+  box-sizing: border-box;
+  border: 1px solid #8fd8d0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #14252c;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button.solve-pdf:hover:not(:disabled) {
+  border-color: #20bdb2;
+  background: #f1fbf9;
+}
+
+.solve-pdf:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.solve-pdf b {
+  flex: none;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #fdeaea;
+  color: #b3342f;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.solve-pdf-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.solve-pdf small {
+  flex: none;
+  color: #7a8a94;
+  font-size: 12.5px;
+}
+
+.solve-pdf.chosen {
+  cursor: default;
+  padding-right: 6px;
+}
+
+.solve-pdf-remove {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #536675;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.solve-pdf-remove:hover {
+  background: #fdeaea;
+  color: #b3342f;
+}
+
+@media (max-width: 560px) {
+  .solve-attach {
+    height: auto;
+    padding: 10px 14px;
+    text-align: left;
+  }
+}

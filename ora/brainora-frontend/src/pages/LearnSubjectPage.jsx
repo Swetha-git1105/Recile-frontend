@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useAllResources from "../hooks/useAllResources";
 import ResourceGroups from "../components/ResourceGroups";
+import NoResultsRequest from "../components/NoResultsRequest";
 import { departmentLabel } from "../data/academicData";
 import {
   isCommon,
@@ -68,10 +69,19 @@ export default function LearnSubjectPage() {
         </div>
       )}
 
-      {!loading && !error && (
-        <ResourceGroups
-          items={items}
-          emptyMessage="No one has shared a resource for this subject yet. Use the Upload page to add the first one."
+      {!loading && !error && items.length > 0 && (
+        <ResourceGroups items={items} />
+      )}
+
+      {/* Nothing here yet: let the student ask for it */}
+      {!loading && !error && items.length === 0 && (
+        <NoResultsRequest
+          query={subject}
+          title={`No resources for “${subject}” yet`}
+          message="Nobody has shared one yet. Request it and every student will be notified, or upload the first one yourself from the Upload page."
+          department={departmentLabel(department)}
+          semester={semester}
+          subject={subject}
         />
       )}
     </main>

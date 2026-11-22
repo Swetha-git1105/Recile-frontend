@@ -1,0 +1,135 @@
+/* Notifications page (the bell leads here). Stay Updated is a separate page. */
+
+.notifications-page {
+  display: grid;
+  gap: 24px;
+}
+
+.notifications-page .learn-heading,
+.notifications-page .learn-explorer {
+  margin: 0;
+}
+
+.notifications-page .notifications-card {
+  padding: clamp(14px, 2vw, 24px);
+}
+
+.notifications-markall,
+.notifications-refresh {
+  height: 42px;
+  padding: 0 20px;
+  border: 1px solid #dfe8e8;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #078f89;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.notifications-markall:hover,
+.notifications-refresh:hover {
+  border-color: #20bdb2;
+}
+
+/* ---------- the list: every notification is its own card with a gap ---------- */
+
+.notifications-list {
+  display: grid;
+  gap: 14px;                         /* space between notifications */
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notifications-list li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid #e3eeee;
+  border-radius: 14px;
+  background: #ffffff;
+  cursor: default;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.notifications-list li:hover {
+  border-color: #b9e3de;
+  box-shadow: 0 6px 16px rgba(7, 143, 137, 0.08);
+}
+
+.notifications-list li.unread {
+  background: #f1fbf9;
+  cursor: pointer;
+}
+
+.notifications-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.notifications-list li.unread .notifications-dot {
+  background: #e5484d;
+}
+
+.notifications-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+}
+
+.notifications-text p {
+  margin: 0;
+  color: #14252c;
+  font-size: 15px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.notifications-text small {
+  color: #7a8a94;
+  font-size: 12.5px;
+}
+
+/* the action button sits on the right of each notification */
+.notifications-action {
+  flex: none;
+  padding: 9px 18px;
+  border: 1px solid #b9e3de;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #078f89;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.notifications-action:hover {
+  border-color: #20bdb2;
+  background: #e8f8f5;
+}
+
+@media (max-width: 560px) {
+  .notifications-page .learn-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .notifications-list li {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .notifications-action {
+    margin-left: 26px;               /* lines up under the message text */
+  }
+}

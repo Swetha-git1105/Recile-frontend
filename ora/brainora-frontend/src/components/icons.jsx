@@ -162,3 +162,33 @@ export const CalendarCheckIcon = (props) => (
     <path d="m17 30 5 5 10-10" />
   </Svg>
 );
+
+// Credit System tab: a coin
+export const CreditsIcon = (props) => (
+  <Svg {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M14.8 9.2c-.6-.8-1.6-1.2-2.8-1.2-1.7 0-2.8.9-2.8 2.1 0 3 5.8 1.4 5.8 4.4 0 1.2-1.2 2.1-3 2.1-1.3 0-2.4-.5-3-1.4" />
+    <path d="M12 6.5V8m0 8v1.5" />
+  </Svg>
+);
+
+// Time for Solving tab: a speech bubble with a question mark
+export const SolveIcon = (props) => (
+  <Svg {...props}>
+    <path d="M7.9 20A9 9 0 1 0 4 16.1L2.5 21.5Z" />
+    <path d="M9.1 9.2a3 3 0 0 1 5.8 1c0 2-2.9 2.6-2.9 2.6" />
+    <path d="M12 16.8h.01" />
+  </Svg>
+);
+
+// Leaderboard tab: a trophy
+export const TrophyIcon = (props) => (
+  <Svg {...props}>
+    <path d="M8 4h8v5a4 4 0 0 1-8 0V4Z" />
+    <path d="M8 6H5a1 1 0 0 0-1 1c0 2.5 1.6 4 4 4" />
+    <path d="M16 6h3a1 1 0 0 1 1 1c0 2.5-1.6 4-4 4" />
+    <path d="M12 13v4" />
+    <path d="M8.5 20h7" />
+    <path d="M10 17h4v3h-4z" />
+  </Svg>
+);

@@ -1,0 +1,81 @@
+/* Small additions to a resource card: the access cost line and the
+   "Resource unavailable" box. */
+
+.learn-resource-access {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #078f89;
+}
+
+.learn-resource-access.paid {
+  color: #9a6a00;
+}
+
+.learn-resource-credit-link {
+  display: inline-block;
+  margin-top: 6px;
+  color: #078f89;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.learn-resource-credit-link:hover {
+  text-decoration: underline;
+}
+
+.resource-unavailable {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid #f1d9b5;
+  border-radius: 14px;
+  background: #fff8ec;
+}
+
+.resource-unavailable strong {
+  color: #8a5a00;
+  font-size: 14px;
+}
+
+.resource-unavailable p {
+  margin: 0;
+  color: #6b5a3c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.resource-unavailable button {
+  justify-self: start;
+  height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: #078f89;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resource-unavailable button:hover:not(:disabled) {
+  background: #067d77;
+}
+
+.resource-unavailable button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.resource-unavailable .request-done {
+  color: #087f70;
+  font-weight: 700;
+}
+
+.resource-unavailable .request-error {
+  color: #b3342f;
+  font-weight: 600;
+}

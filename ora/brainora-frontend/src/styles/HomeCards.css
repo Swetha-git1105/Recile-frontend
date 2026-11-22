@@ -1,0 +1,21 @@
+/* Home page: the Learn / Track / Stay Updated cards keep the soft original look
+   (a faint frame around the three cards and a light border on each card),
+   instead of the stronger green lining used on other pages. */
+
+.app-shell .main .quick-panel {
+  border: 1px solid #e6f1f2;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 22px rgba(42, 137, 143, 0.05);
+}
+
+.app-shell .main .quick-card {
+  border: 1px solid #e7f0f1;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 18px rgba(137, 95, 33, 0.07);
+}
+
+.app-shell .main .quick-card:hover {
+  border-color: #b7e9e4;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 22px rgba(33, 132, 137, 0.12);
+}

@@ -10,7 +10,7 @@ import {
 import {
   getResources,
   getMyUploads,
-  getMyCredits,
+  getCreditSummary,
   deleteResource as apiDeleteResource,
 } from "../services/api";
 
@@ -23,6 +23,8 @@ export function ResourceProvider({ children }) {
   const [resources, setResources] = useState([]);
   const [myUploads, setMyUploads] = useState([]);
   const [totalCredits, setTotalCredits] = useState(0);
+  // Credit balance, free accesses left, resources already opened ...
+  const [creditSummary, setCreditSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -31,13 +33,14 @@ export function ResourceProvider({ children }) {
       setLoading(true);
       setError("");
 
-      const [allData, myData, credits] = await Promise.all([
+      const [allData, myData, summary] = await Promise.all([
         getResources(),
         getMyUploads(),
-        getMyCredits(),
+        getCreditSummary(),
       ]);
 
-      setTotalCredits(credits);
+      setCreditSummary(summary);
+      setTotalCredits(Number(summary?.balance) || 0);
 
       setResources(Array.isArray(allData) ? allData : []);
       setMyUploads(Array.isArray(myData) ? myData : []);
@@ -45,6 +48,18 @@ export function ResourceProvider({ children }) {
       setError(err.message || "Unable to load resources.");
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  // Reload only the credit numbers (after a resource was opened).
+  const refreshCredits = useCallback(async () => {
+    try {
+      const summary = await getCreditSummary();
+
+      setCreditSummary(summary);
+      setTotalCredits(Number(summary?.balance) || 0);
+    } catch {
+      // The numbers are refreshed again on the next full reload.
     }
   }, []);
 
@@ -57,6 +72,7 @@ export function ResourceProvider({ children }) {
       setResources([]);
       setMyUploads([]);
       setTotalCredits(0);
+      setCreditSummary(null);
       setError("");
     }
   }, [user, refreshResources]);
@@ -79,9 +95,11 @@ export function ResourceProvider({ children }) {
       resources,
       myUploads,
       totalCredits,
+      creditSummary,
       loading,
       error,
       refreshResources,
+      refreshCredits,
       addResource,
       deleteResource: removeResource,
     }),
@@ -89,9 +107,11 @@ export function ResourceProvider({ children }) {
       resources,
       myUploads,
       totalCredits,
+      creditSummary,
       loading,
       error,
       refreshResources,
+      refreshCredits,
       addResource,
       removeResource,
     ]

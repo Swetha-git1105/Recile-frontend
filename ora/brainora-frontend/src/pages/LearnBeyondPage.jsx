@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useAllResources from "../hooks/useAllResources";
 import ResourceGroups from "../components/ResourceGroups";
+import NoResultsRequest from "../components/NoResultsRequest";
 import { BEYOND_CATEGORIES } from "../data/academicData";
 import { isCommon, matchSubject } from "../utils/resourceMatching";
 import "../styles/LearnPage.css";
@@ -58,10 +59,18 @@ export default function LearnBeyondPage() {
         </div>
       )}
 
-      {!loading && !error && (
-        <ResourceGroups
-          items={items}
-          emptyMessage="No one has shared a resource in this category yet. Use the Upload page and choose Beyond the Syllabus."
+      {!loading && !error && items.length > 0 && (
+        <ResourceGroups items={items} />
+      )}
+
+      {/* Nothing here yet: let the student ask for it */}
+      {!loading && !error && items.length === 0 && (
+        <NoResultsRequest
+          query={category}
+          title={`No resources for “${category}” yet`}
+          message="Nobody has shared one yet. Request it and every student will be notified, or upload the first one yourself from the Upload page."
+          department="Beyond the Syllabus"
+          subject={category}
         />
       )}
     </main>

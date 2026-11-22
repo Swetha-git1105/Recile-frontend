@@ -102,11 +102,11 @@ function LoginPage() {
         <div className="divider">or</div>
         <div className="login-footer">
           <span className="register-text">Create an Account? <Link to="/register">Register</Link></span>
-          <Link to="/forgot-password">Forgot Password?</Link>
+        
         </div>
       </main>
     </div>
   );
 }
-
+// <Link to="/forgot-password">Forgot Password?</Link>.
 export default LoginPage;
