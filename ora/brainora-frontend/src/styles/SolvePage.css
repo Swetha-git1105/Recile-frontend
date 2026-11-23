@@ -335,3 +335,157 @@ button.solve-pdf:hover:not(:disabled) {
     text-align: left;
   }
 }
+
+/* ---------- credits for solutions, duplicate solutions, mobile alignment ---------- */
+
+/* Grid columns may shrink: nothing pushes the page wider than the screen */
+.solve-form,
+.solve-list,
+.solve-file {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.solve-page,
+.solve-panel,
+.solve-question,
+.solve-answer {
+  min-width: 0;
+}
+
+.solve-attach svg {
+  flex: none;
+}
+
+.solve-check span {
+  min-width: 0;
+}
+
+.solve-credit-hint {
+  margin: -4px 0 0;
+  color: #078f89;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.solve-credit-hint.none {
+  color: #7a8a94;
+}
+
+.solve-result {
+  margin: 14px 0 0;
+  padding: 11px 14px;
+  border: 1px solid #bfe9e0;
+  border-radius: 12px;
+  background: #e9f8f4;
+  color: #087f70;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.solve-result.duplicate {
+  border-color: #f1d9b5;
+  background: #fff8ec;
+  color: #8a5a00;
+}
+
+.solve-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.solve-tag.earned {
+  background: #e2f8f5;
+  color: #078f89;
+}
+
+.solve-tag.warn {
+  background: #fdeccd;
+  color: #8a5a00;
+}
+
+.solve-answer.duplicate-hit {
+  outline: 2px solid #e6a400;
+  background: #fffaf0;
+}
+
+/* ----- phones: the "Add a solution" form and its buttons ----- */
+@media (max-width: 560px) {
+  .solve-question {
+    padding: 16px 14px;
+  }
+
+  .solve-question h3 {
+    font-size: 17px;
+  }
+
+  /* "Add a solution" / "Delete" share the row, full width */
+  .solve-card-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  .solve-card-actions button {
+    width: 100%;
+    height: 44px;
+    justify-self: stretch;
+  }
+
+  /* The form becomes one tidy panel */
+  .solve-form.inline {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid #dcebed;
+    border-radius: 14px;
+    background: #f7fcfb;
+  }
+
+  /* 16px stops iPhones from zooming in when a field is tapped */
+  .solve-form input[type="text"],
+  .solve-form textarea {
+    font-size: 16px;
+  }
+
+  .solve-form .solve-file {
+    justify-items: stretch;
+  }
+
+  .solve-form .solve-attach,
+  .solve-form .solve-pdf {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .solve-attach {
+    flex-wrap: wrap;
+    row-gap: 2px;
+    height: auto;
+    padding: 10px 14px;
+    text-align: left;
+  }
+
+  .solve-form .primary {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .solve-answers {
+    gap: 10px;
+  }
+
+  .solve-answer {
+    padding: 12px;
+  }
+
+  .solve-tag {
+    margin-left: 0;
+    margin-top: 4px;
+  }
+}

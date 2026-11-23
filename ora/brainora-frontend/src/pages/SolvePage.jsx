@@ -7,6 +7,8 @@ import {
   deleteAnswer,
   getQuestionAttachmentBlob,
 } from "../services/api";
+import { useResources } from "../context/ResourceContext";
+import { formatCredits } from "../utils/credits";
 import "../styles/LearnPage.css";
 import "../styles/SolvePage.css";
 import "../styles/SolveTabs.css";
@@ -164,8 +166,13 @@ function PdfLink({ attachment }) {
   );
 }
 
+// Credits for a solution posted under your own name (must match the server)
+const SOLVE_CREDITS = 2;
+
 // One question with its answers and the answer form
 function QuestionCard({ question, onChanged, onRemoved }) {
+  const { refreshCredits } = useResources();
+
   const [open, setOpen] = useState(false);
   const [body, setBody] = useState("");
   const [anonymous, setAnonymous] = useState(false);
@@ -173,19 +180,51 @@ function QuestionCard({ question, onChanged, onRemoved }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  // What happened to the solution that was just sent: { text, duplicate }
+  const [result, setResult] = useState(null);
+  const [highlightId, setHighlightId] = useState(null);
+
   async function submitAnswer(event) {
     event.preventDefault();
 
     try {
       setBusy(true);
       setError("");
+      setResult(null);
+      setHighlightId(null);
 
-      const updated = await answerQuestion(question.id, { body, anonymous, file });
+      const { notice, creditsAwarded, duplicateAnswerId, ...updated } =
+        await answerQuestion(question.id, { body, anonymous, file });
 
       onChanged(updated);
+
+      if (duplicateAnswerId) {
+        // Not posted again: show the solution that already exists
+        setResult({
+          text: notice || "This solution already exists.",
+          duplicate: true,
+        });
+        setHighlightId(duplicateAnswerId);
+
+        window.setTimeout(() => {
+          document
+            .getElementById(`answer-${duplicateAnswerId}`)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 80);
+
+        return;
+      }
+
+      setResult({
+        text: notice || "Your solution was posted.",
+        duplicate: false,
+      });
       setBody("");
       setFile(null);
       setOpen(false);
+
+      // The top-bar credit number changes when credits were earned
+      if (Number(creditsAwarded) > 0) refreshCredits();
     } catch (err) {
       setError(err.message || "Unable to post your answer.");
     } finally {
@@ -205,7 +244,7 @@ function QuestionCard({ question, onChanged, onRemoved }) {
   }
 
   async function removeAnswer(answerId) {
-    if (!window.confirm("Delete your answer?")) return;
+    if (!window.confirm("Delete your answer? Credits earned for it are removed.")) return;
 
     try {
       await deleteAnswer(answerId);
@@ -214,9 +253,23 @@ function QuestionCard({ question, onChanged, onRemoved }) {
         ...question,
         answers: question.answers.filter((answer) => answer.id !== answerId),
       });
+
+      refreshCredits();
     } catch (err) {
       setError(err.message || "Unable to delete the answer.");
     }
+  }
+
+  // What this solution will earn, shown under the checkbox
+  let creditHint = `Post under your name to earn ${SOLVE_CREDITS} credits for solving this question (once per question).`;
+  let creditHintNone = false;
+
+  if (question.mine) {
+    creditHint = "Answering your own question earns no credits.";
+    creditHintNone = true;
+  } else if (anonymous) {
+    creditHint = "Anonymous solutions earn no credits.";
+    creditHintNone = true;
   }
 
   return (
@@ -264,8 +317,12 @@ function QuestionCard({ question, onChanged, onRemoved }) {
               checked={anonymous}
               onChange={(event) => setAnonymous(event.target.checked)}
             />
-            Answer anonymously
+            <span>Answer anonymously</span>
           </label>
+
+          <p className={`solve-credit-hint${creditHintNone ? " none" : ""}`}>
+            {creditHint}
+          </p>
 
           <button type="submit" className="primary" disabled={busy}>
             {busy ? "Posting..." : "Post solution"}
@@ -275,6 +332,15 @@ function QuestionCard({ question, onChanged, onRemoved }) {
 
       {error && <p className="solve-error">{error}</p>}
 
+      {result && (
+        <p
+          className={`solve-result${result.duplicate ? " duplicate" : ""}`}
+          role="status"
+        >
+          {result.text}
+        </p>
+      )}
+
       <div className="solve-answers">
         <h4>
           {question.answers.length}{" "}
@@ -282,9 +348,21 @@ function QuestionCard({ question, onChanged, onRemoved }) {
         </h4>
 
         {question.answers.map((answer) => (
-          <div className="solve-answer" key={answer.id}>
+          <div
+            className={`solve-answer${answer.id === highlightId ? " duplicate-hit" : ""}`}
+            id={`answer-${answer.id}`}
+            key={answer.id}
+          >
             <p className="solve-meta">
               {authorLabel(answer)} · {formatWhen(answer.createdAt)}
+              {answer.id === highlightId && (
+                <span className="solve-tag warn">Already posted</span>
+              )}
+              {answer.mine && Number(answer.creditsEarned) > 0 && (
+                <span className="solve-tag earned">
+                  +{formatCredits(answer.creditsEarned)} credits
+                </span>
+              )}
             </p>
 
             <p className="solve-body">{answer.body}</p>

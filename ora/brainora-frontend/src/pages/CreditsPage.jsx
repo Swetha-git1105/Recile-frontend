@@ -59,8 +59,8 @@ export default function CreditsPage() {
           <span className="learn-eyebrow">YOUR CREDITS</span>
           <h1>Credit System</h1>
           <p>
-            Earn credits by sharing resources. Spend them to open resources
-            made by other students.
+            Earn credits by sharing resources and solving questions. Spend
+            them to open resources made by other students.
           </p>
         </div>
       </section>
@@ -90,7 +90,7 @@ export default function CreditsPage() {
             <div className="credits-stat">
               <span>Earned</span>
               <strong>{formatCredits(summary.earned)}</strong>
-              <small>from your uploads</small>
+              <small>from uploads and solutions</small>
             </div>
 
             <div className="credits-stat">
@@ -150,6 +150,15 @@ export default function CreditsPage() {
                     <strong>1 credit</strong> for every repeat after that.
                   </li>
                   <li>Uploading a file you already shared earns nothing.</li>
+                  <li>
+                    <strong>2 credits</strong> each time you solve a question
+                    under your own name, once per question. Anonymous
+                    solutions and answers to your own question earn nothing.
+                  </li>
+                  <li>
+                    A solution that already exists on the question is not
+                    posted again and earns nothing.
+                  </li>
                 </ul>
               </div>
 
